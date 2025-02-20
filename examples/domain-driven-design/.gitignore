@@ -1,0 +1,29 @@
+# Node modules
+node_modules/
+
+# Logs
+*.log
+
+# Diretórios de build
+dist/
+
+# Arquivos de dependências de pacotes do npm
+package-lock.json
+
+# Arquivos de ambiente
+.env
+
+# Diretórios de cache do VSCode
+.vscode/
+
+# Diretórios de cache do Docker
+.docker/
+
+# Arquivos temporários
+*.tmp
+*.swp
+*.swo
+
+# Arquivos de sistema específicos
+.DS_Store
+Thumbs.db

@@ -40,6 +40,15 @@
 
 ## 🚀 Como Usar Este Template
 
+### 📂 Exemplos de Arquitetura
+
+Este repositório contém exemplos de diferentes abordagens arquiteturais para aplicações Fastify. Cada exemplo está disponível na pasta [`examples`](./examples).
+
+| Arquitetura | Descrição | Link |
+|------------|------------|------|
+| **Domain-Driven Design (DDD) Modular** | Organização modular baseada em Domínios e Contextos Delimitados (Bounded Contexts). | [Ver Exemplo](./examples/domain-driven-design/) |
+
+---
 ### 1️⃣ Clonar o Repositório
 ```sh
  git clone https://github.com/seu-usuario/fastify-boilerplate.git nome-do-seu-projeto
