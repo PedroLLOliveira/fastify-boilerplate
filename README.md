@@ -49,6 +49,15 @@ Este repositório contém exemplos de diferentes abordagens arquiteturais para a
 | **Domain-Driven Design (DDD) Modular** | Organização modular baseada em Domínios e Contextos Delimitados (Bounded Contexts). | [Ver Exemplo](./examples/domain-driven-design/) |
 
 ---
+
+### 🛢 ORMs Disponíveis
+Este repositório oferece suporte a diferentes ORMs para integração com PostgreSQL.
+
+| Arquitetura | Descrição | Link |
+|------------|------------|------|
+| **Sequelize** | ORM tradicional baseado em Active Record para bancos SQL. | Implementado no boilerplate principal |
+| **Prisma** | ORM moderno, baseado em Schema-First, com suporte a migrações e geração automática de tipos. | [Ver Exemplo](https://github.com/PedroLLOliveira/fastify-boilerplate/tree/main/examples/orms/example-prisma) |
+| **TypeORM** | ORM focado em Data Mapper, com suporte a migrations, decorators e entidades. | [Ver Exemplo](https://github.com/PedroLLOliveira/fastify-boilerplate/tree/main/examples/orms/example-typeORM) |
 ### 1️⃣ Clonar o Repositório
 ```sh
  git clone https://github.com/seu-usuario/fastify-boilerplate.git nome-do-seu-projeto
