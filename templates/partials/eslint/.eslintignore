@@ -1,0 +1,8 @@
+# Ignorar diretórios comuns
+node_modules/
+dist/
+build/
+coverage/
+
+# Ignorar arquivos minificados
+*.min.js

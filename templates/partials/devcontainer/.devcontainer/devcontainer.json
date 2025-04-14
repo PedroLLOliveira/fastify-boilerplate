@@ -1,0 +1,22 @@
+{
+    "name": "Fastify Development",
+    "dockerFile": "Dockerfile",
+    "appPort": [
+        "3000:3000"
+    ],
+    "settings": {
+        "terminal.integrated.shell.linux": "/bin/bash",
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "mikestead.dotenv",
+        "christian-kohler.npm-intellisense",
+        "orta.vscode-jest"
+    ],
+    "remoteUser": "node",
+    "postCreateCommand": "npm install",
+    "forwardPorts": [3000]
+  }

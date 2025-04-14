@@ -1,0 +1,5 @@
+# Ignorar diretórios comuns
+node_modules/
+build/
+dist/
+coverage/
