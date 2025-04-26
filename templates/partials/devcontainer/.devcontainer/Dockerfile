@@ -1,21 +1,20 @@
-FROM node:20-bullseye
+FROM node:18-slim
 
-# Evitar avisos de apt-get durante a construção
-ENV DEBIAN_FRONTEND=noninteractive
-
-# Instalar ferramentas úteis para desenvolvimento
-RUN apt-get update \
-    && apt-get -y install git procps curl wget nano \
-    && apt-get autoremove -y \
-    && apt-get clean -y \
-    && rm -rf /var/lib/apt/lists/*
-
-# Configurar o diretório de trabalho
 WORKDIR /workspace
 
-# Definir usuário não-root para segurança
+# Copiar arquivos de dependência primeiro
+COPY package*.json ./
+
+# Atualizar npm e instalar dependências
+RUN npm install -g npm@latest && npm install
+
+# Copiar código restante
+COPY . .
+
+# Criar usuário não-root
+RUN useradd -m node
 USER node
 
-# Configurar um entrypoint mais confiável
-ENTRYPOINT ["/bin/bash", "-c"]
-CMD ["while sleep 1000; do :; done"]
+EXPOSE 3000
+
+CMD ["npm", "run", "dev"]
