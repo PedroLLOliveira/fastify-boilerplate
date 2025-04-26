@@ -1,0 +1,13 @@
+# Ignorar diretórios comuns
+node_modules
+dist
+build
+coverage
+*.lock
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+.env
+*.ejs
+templates/
+lib/generator.js

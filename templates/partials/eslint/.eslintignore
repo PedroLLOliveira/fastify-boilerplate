@@ -1,0 +1,14 @@
+# Ignorar dependências e builds
+node_modules/
+dist/
+build/
+coverage/
+
+# Ignorar arquivos gerados e minificados
+*.min.js
+
+# Ignorar arquivos de cache ou logs
+*.log
+
+# Ignorar outros diretórios que possam conter assets não necessários para a lintagem, como public/
+public/

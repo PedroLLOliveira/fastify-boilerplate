@@ -1,9 +1,0 @@
-{
-    "development": {
-      "username": "postgres",
-      "password": "postgres",
-      "database": "fastify-boilerplate-db",
-      "host": "fastify-prisma-boilerplate_devcontainer-db-1",
-      "dialect": "postgres"
-    }
-  }

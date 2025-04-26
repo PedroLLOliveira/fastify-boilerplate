@@ -1,0 +1,10 @@
+// Importar a conexão do MongoDB da camada de infraestrutura
+import { connectToDatabase } from './infrastructure/database/mongodb-connection.js';
+
+// Conectar ao MongoDB antes de iniciar o servidor
+connectToDatabase()
+  .then(() => console.log('MongoDB conectado com sucesso'))
+  .catch(err => {
+    console.error('Erro ao conectar ao MongoDB:', err);
+    process.exit(1);
+  });
