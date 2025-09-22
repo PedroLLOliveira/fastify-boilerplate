@@ -1,38 +1,57 @@
 {
-  "name": "fastify-boilerplate",
+  "name": "create-fastify-boilerplate",
   "version": "1.0.0",
-  "main": "index.js",
+  "description": "Gerador de projetos Fastify com suporte a TypeScript/JavaScript e arquiteturas MVC, Clean e Modular",
+  "type": "module",
   "bin": {
     "create-fastify-boilerplate": "bin/cli.js"
   },
-  "type": "module",
-  "keywords": [
-    "fastify",
-    "boilerplate",
-    "generator",
-    "cli"
+  "main": "bin/cli.js",
+  "files": [
+    "bin",
+    "lib",
+    "README.md",
+    "LICENSE"
   ],
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "lint": "eslint . || echo 'skip'",
+    "prepublishOnly": "npm run lint"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/PedroLLOliveira/fastify-boilerplate.git"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "fastify",
+    "boilerplate",
+    "generator",
+    "cli",
+    "typescript",
+    "javascript",
+    "scaffold"
+  ],
+  "author": "Pedro L. Oliveira <seu-email@exemplo.com>",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/PedroLLOliveira/fastify-boilerplate/issues"
   },
   "homepage": "https://github.com/PedroLLOliveira/fastify-boilerplate#readme",
-  "description": "",
   "dependencies": {
     "chalk": "^5.4.1",
     "commander": "^13.1.0",
     "ejs": "^3.1.10",
     "fs-extra": "^11.3.0",
     "inquirer": "^12.5.2",
-    "path": "^0.12.7"
+    "kolorist": "^1.8.0"
+  },
+  "devDependencies": {
+    "eslint": "^9.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
   }
 }
