@@ -1,6 +1,6 @@
 {
   "name": "create-fastify-boilerplate",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Gerador de projetos Fastify com suporte a TypeScript/JavaScript e arquiteturas MVC, Clean e Modular",
   "type": "module",
   "bin": {
