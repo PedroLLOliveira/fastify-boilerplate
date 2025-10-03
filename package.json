@@ -1,17 +1,12 @@
 {
   "name": "fastify-boilerplate",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "main": "index.js",
   "bin": {
     "create-fastify-boilerplate": "bin/cli.js"
   },
   "type": "module",
-  "keywords": [
-    "fastify",
-    "boilerplate",
-    "generator",
-    "cli"
-  ],
+  "keywords": [],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -19,7 +14,6 @@
     "type": "git",
     "url": "git+https://github.com/PedroLLOliveira/fastify-boilerplate.git"
   },
-  "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
