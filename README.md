@@ -8,108 +8,137 @@
 ![Jest](https://img.shields.io/badge/Jest-%5E29.0.0-red?style=flat-square&logo=jest)
 
 
-🚀 **Fastify Boilerplate** é um template de projeto para aplicações **Node.js** utilizando o framework **Fastify**. Criado para oferecer uma base sólida e bem configurada, inclui ferramentas essenciais para um fluxo de trabalho eficiente, colaborativo e escalável.
+🚀 **Fastify Boilerplate** é um **gerador de projetos Fastify** para times e solo: você cria um novo app Node.js já com **arquitetura organizada, padrões de código, testes, CI** e **ambiente de desenvolvimento** prontos. Ideal para acelerar kickoffs, padronizar entre squads e manter a casa em ordem sem perder velocidade.
 
 ---
 
-## ✨ Tecnologias e Ferramentas Incluídas
+## ✨ O que vem pronto
 
-- ✅ **Fastify** → Framework rápido e eficiente para Node.js.
-- ✅ **Dev Container** → Ambiente de desenvolvimento padronizado utilizando contêineres.
-- ✅ **Sequelize** → ORM para modelagem e interação com bancos de dados SQL de forma simplificada.
-- ✅ **PostgreSQL** → Banco de dados relacional poderoso, escalável e seguro.
-- ✅ **GitHub Actions** → Automatização de CI/CD, garantindo qualidade no código.
-- ✅ **ESLint** → Padronização do código e prevenção de erros comuns.
-- ✅ **Jest (TypeScript)** → Testes unitários e de integração para garantir robustez.
+- ✅ **Fastify** → servidor web leve e veloz para Node.js.
+- ✅ **Dev Container** → ambiente padronizado em Docker para todos trabalharem igual.
+- ✅ **ORM + PostgreSQL** → escolha entre Sequelize (default), Prisma ou TypeORM.
+- ✅ **GitHub Actions** → pipeline de CI/CD para testes e qualidade.
+- ✅ **ESLint** → linting consistente.
+- ✅ **Jest** → testes (com suporte a TypeScript no projeto de testes).
 
----
-
-## 💡 Por que essas Tecnologias?
-
-| Tecnologia        | Benefícios |
-|------------------|------------|
-| **Fastify** | Framework rápido e otimizado para alta performance. |
-| **Dev Container** | Garante um ambiente idêntico para toda a equipe. |
-| **Sequelize** | Facilita a manipulação de bancos de dados SQL com um ORM robusto. |
-| **PostgreSQL** | Banco de dados escalável e confiável para aplicações modernas. |
-| **GitHub Actions** | Automatiza testes e deploys, melhorando a produtividade. |
-| **ESLint** | Mantém um código limpo e padronizado. |
-| **Jest (TS)** | Testes confiáveis com TypeScript, garantindo a qualidade do código. |
+> Por que essas escolhas?
+> - "**Performance e DX** com Fastify";
+> - "**Ambiente idêntico** entre devs com Dev Container";
+> - "**ORMs maduros + PostgresSQL** para escalar com segurança";
+> - "**Automação** com Actions; **qualidade contínua** com ESLint + Jest";
 
 ---
 
-## 🚀 Como Usar Este Template
+## 🚀 Instalação & uso
+> Você pode usar globalmente (CLI no PATH) ou pontual com `npx`
 
-### 📂 Exemplos de Arquitetura
+### Opção A) Global (recomendado para uso frequente)
+```bash
+npm i -g fastify-boilerplate
+fastify-boilerplate
+```
 
-Este repositório contém exemplos de diferentes abordagens arquiteturais para aplicações Fastify. Cada exemplo está disponível na pasta [`examples`](./examples).
+### Opção B) Pontual com npx (zero instalação)
+```bash
+npx fastify-boilerplate@latest
+```
 
-| Arquitetura | Descrição | Link |
-|------------|------------|------|
-| **Domain-Driven Design (DDD) Modular** | Organização modular baseada em Domínios e Contextos Delimitados (Bounded Contexts). | [Ver Exemplo](./examples/domain-driven-design/) |
+O CLI abrirá um **wizard interativo** para você escolher:
+- **Nome do projeto**
+- **Arquitetura** (ex.: DDD modular ou básica)
+- **ORM** (Sequelize/Prisma/TypeORM)
+- **Ativar Dev Container**
+- **Configurar CI(Github Actions)**
+> Dica: após gerar, os scripts padrão do projeto incluem `dev`, `lint`, `test` e `build`.
 
 ---
 
-### 🛢 ORMs Disponíveis
-Este repositório oferece suporte a diferentes ORMs para integração com PostgreSQL.
+## 🧰 Tecnologias (e por que elas estão aqui)
 
-| Arquitetura | Descrição | Link |
-|------------|------------|------|
-| **Sequelize** | ORM tradicional baseado em Active Record para bancos SQL. | Implementado no boilerplate principal |
-| **Prisma** | ORM moderno, baseado em Schema-First, com suporte a migrações e geração automática de tipos. | [Ver Exemplo](https://github.com/PedroLLOliveira/fastify-boilerplate/tree/main/examples/orms/example-prisma) |
-| **TypeORM** | ORM focado em Data Mapper, com suporte a migrations, decorators e entidades. | [Ver Exemplo](https://github.com/PedroLLOliveira/fastify-boilerplate/tree/main/examples/orms/example-typeORM) |
-### 1️⃣ Clonar o Repositório
-```sh
- git clone https://github.com/seu-usuario/fastify-boilerplate.git nome-do-seu-projeto
- cd nome-do-seu-projeto
-```
+| Tecnologia        | Papel no projeto | Por que usar |
+|------------------|------------|-----------------|
+| **Fastify** | Framework HTTP | Alto desempenho + ecossistema robusto |
+| **Dev Container** | Ambiente dev | Mesmo setup para todos do time |
+| **Sequelize** | ORM (default) | Simples, estável e direto com SQL |
+| **Prisma** | ORM (opcional) | DX excelente, schema-first e tipos |
+| **TypeORM** | ORM (opcional) | Data Mapper com decorators e migrations |
+| **PostgreSQL** | Banco de dados | Confiável, escalável, recursos avançados |
+| **GitHub Actions** | CI/CD | Testes e checks automatizados |
+| **ESLint** | Qualidade | Padroniza e previne erros comuns |
+| **Jest (TS)** | Testes | Unitários/integração simples e rápidos |
 
-### 2️⃣ Abrir o Projeto com Dev Container (Opcional)
-Caso utilize o **Dev Container**, siga os passos abaixo:
-- Certifique-se de ter o **Docker** e o **VS Code** instalados.
-- Abra o VS Code e instale a extensão **Remote - Containers**.
-- No VS Code, abra a pasta do projeto e pressione `F1`, digite **Remote-Containers: Reopen in Container** e selecione essa opção.
-- O ambiente será inicializado automaticamente dentro do contêiner.
-
-### 3️⃣ Instalar Dependências
-```sh
-npm install
-```
-
-### 4️⃣ Rodar o Servidor em Desenvolvimento
-```sh
-npm run dev
-```
-🟢 A aplicação estará rodando em `http://localhost:3000`
-
-### 5️⃣ Rodar Linter e Testes
-- Para verificar problemas no código:
-```sh
-npm run lint
-```
-- Para executar os testes automatizados:
-```sh
-npm test
-```
-
-### 6️⃣ Gerar Build para Produção
-```sh
-npm run build
-```
+As opções acima aparecem como escolhas no gerador e também existem **exemplos de arquitetura e ORMs** no repositório
 
 ---
 
-## 🛠 Scripts Disponíveis
+## 🧪 Scripts úteis (no projeto gerado)
+```bash
+npm run dev        # inicia o servidor em desenvolvimento
+npm run lint       # executa o ESLint
+npm test           # roda a suite de testes
+npm run build      # gera build de produção
+```
 
-| Comando | Descrição |
-|---------|-----------|
-| `npm run dev` | Inicia o servidor Fastify em modo de desenvolvimento. |
-| `npm run lint` | Executa o ESLint para verificar erros de código. |
-| `npm test` | Roda os testes unitários e de integração com Jest. |
-| `npm run build` | Gera a build para produção. |
+Esses scripts já vêm configurados para você começar a trabalhar imediatamente.
 
 ---
 
-## 🤝 Contribuição
-Contribuições são bem-vindas! Sinta-se à vontade para abrir **issues** e **pull requests** para melhorias, correções ou novas funcionalidades. 💙
+## 🧱 Exemplos de projetos que você pode gera
+A CLI oferece variações de **arquitetura** e **ORM**. Aqui vão exemplos tpipicos de uso:
+
+### 1) API básica com Sequelize (default)
+- **Quando usar**: CRUDs rápidos, time acostumado com Active Record.
+- **Como gerar**: no wizard, escolha **Arquitetura Básica + Sequelize**.
+- **Scripts promps**: `dev`, `lint`, `test` e `build`.
+
+### 2) API modular (DDD) com Sequelize
+- **Quando usar**: domínios bem definidos, times grandes ou mpultiplos contextos.
+- **Como gerar**: no wizard, escolha **Arquitetura DDD Modular + Sequelize**.
+- **Beneficíos**: separação por dompinios, crescimento sustentável do código.
+   (O repositório traz referência de DDD modular)
+
+### 3) API com Prisma
+- **Quando usar**: produtividade + tipos fortes, migrações simples, DX moderna.
+- **Como gerar**: no wizard, escolha **Prisma**.
+- **Resultado**: projeto já apontado para PostgresSQL e pronto para `prisma migrate`. 
+
+### 4) API com TypeORM
+- **Quando usar**: preferência por Data Mapper, decorators e entities.
+- **Como gerar**: no wizard, escolha **TypeORM**
+> Observação: as opções de arquitetura e ORMs citadas fazem parte do escopo descrito no repositório e seus exemplos. Ajustes/novas variações podem surgir conforme evolução do projeto.
+
+---
+
+## 🧭 Roadmap sugerido após gerar o projeto
+
+1. Criar DB local e configurar `.env`.
+2. Subir no Dev Container (se você optou por usar).
+3. Rodar `npm run dev` e validar `http://localhost:3000`.
+4. Escrever os primeiros testes (`npm teste`).
+5. Configurar secrets do repositório (se for usar Actions para deploy).
+
+---
+
+## 🤝 Como contribuir
+Contribuições são super bem-vindas! Siga este passo a passo:
+1. **Faça um fork** do repositório.
+2. **Crie uma branch** descritiva:
+   ```bash
+   git checkout -b feat/cli-prompts-orm
+   ```
+3. **Instale as deps e rode testes/lint**:
+   ```bash
+   npm ci
+   npm run lint
+   npm test
+   ```
+4. **Implemente sua melhoria** (código, docs, templates, exemplos).
+5. **Abra um Pull Request** explicando o contexto, o "porquê" e como validar.
+6. Se sua mudança alterar comportamento do gerador, **acidione/atualize exemplos** e **changelog**.
+> Dicas:
+> - "Prefica **commits atômcos** e mensagens no padrão conventional commits (`feat:`, `fix:`, `docs:`...)"
+> - "Inclua **testes** quando fizer sentido."
+> - "Mantenha a **qualidade**: o pipeline de CI (Github Actions) confere o básico."
+
+
 
