@@ -1,6 +1,6 @@
 {
   "name": "fastify-boilerplate",
-  "version": "1.0.5-beta.2",
+  "version": "1.0.5-beta.3",
   "main": "index.js",
   "bin": {
     "create-fastify-boilerplate": "bin/cli.js"
