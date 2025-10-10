@@ -65,6 +65,16 @@ async function main() {
       default: 'postgres'
     },
     {
+      name: 'queryBuilder',
+      type: 'list',
+      message: 'Query Builder?',
+      choices: [
+        { name: 'Nenhum', value: 'none' },
+        { name: 'Knex', value: 'knex' }
+      ],
+      default: 'none'
+    },
+    {
       name: 'eslint',
       type: 'list',
       message: 'ESLint?',
@@ -86,6 +96,16 @@ async function main() {
   if (answers.orm === 'sequelize' && answers.database === 'mongodb') {
     console.log(yellow('> Ajuste: Sequelize não suporta MongoDB. Alterando ORM para Prisma.'));
     answers.orm = 'prisma';
+  }
+
+  if (answers.queryBuilder === 'knex' && answers.database === 'mongodb') {
+    console.log(yellow('> Ajuste: Knex é para bancos SQL. Alterando banco para Postgres.'));
+    answers.database = 'postgres';
+  }
+
+  if (answers.queryBuilder === 'knex' && answers.orm !== 'none') {
+    console.log(yellow('> Observação: usando Knex como camada principal. Desativando ORM.'));
+    answers.orm = 'none';
   }
 
   const root = path.resolve(process.cwd(), answers.projectName);
