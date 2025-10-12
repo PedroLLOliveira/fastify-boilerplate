@@ -50,7 +50,7 @@ async function main() {
         { name: 'Mongoose (MongoDB)', value: 'mongoose' },
         { name: 'Nenhum', value: 'none' }
       ],
-      default: 'prisma'
+      default: 'none'
     },
     {
       name: 'database',
@@ -63,6 +63,17 @@ async function main() {
         { name: 'SQLite (dev)', value: 'sqlite' }
       ],
       default: 'postgres'
+    },
+    {
+      name: 'queryBuilder',
+      type: 'list',
+      message: 'Query Builder?',
+      choices: [
+        { name: 'Nenhum', value: 'none' },
+        { name: 'Knex', value: 'knex' },
+        { name: 'Kysely (TS-first)', value: 'kysely' }
+      ],
+      default: 'none'
     },
     {
       name: 'eslint',
@@ -86,6 +97,16 @@ async function main() {
   if (answers.orm === 'sequelize' && answers.database === 'mongodb') {
     console.log(yellow('> Ajuste: Sequelize não suporta MongoDB. Alterando ORM para Prisma.'));
     answers.orm = 'prisma';
+  }
+
+  if (['knex', 'kysely'].includes(answers.queryBuilder) && answers.database === 'mongodb') {
+    console.log(yellow('> Ajuste: Query builders SQL requerem um banco SQL. Alterando banco para Postgres.'));
+    answers.database = 'postgres';
+  }
+
+  if (answers.queryBuilder !== 'none' && answers.orm !== 'none') {
+    console.log(yellow('> Observação: usando Query Builder como camada principal. Desativando ORM.'));
+    answers.orm = 'none';
   }
 
   const root = path.resolve(process.cwd(), answers.projectName);
