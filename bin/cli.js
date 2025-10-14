@@ -34,8 +34,8 @@ async function main() {
       type: 'list',
       message: 'Arquitetura de pastas?',
       choices: [
-        { name: 'MVC', value: 'mvc' },
-        { name: 'Clean Architecture', value: 'clean' },
+        // { name: 'MVC', value: 'mvc' },
+        // { name: 'Clean Architecture', value: 'clean' },
         { name: 'Modular (partials)', value: 'modular' }
       ],
       default: 'mvc'
@@ -45,9 +45,9 @@ async function main() {
       type: 'list',
       message: 'ORM?',
       choices: [
-        { name: 'Prisma', value: 'prisma' },
+        // { name: 'Prisma', value: 'prisma' },
         { name: 'Sequelize', value: 'sequelize' },
-        { name: 'Mongoose (MongoDB)', value: 'mongoose' },
+        // { name: 'Mongoose (MongoDB)', value: 'mongoose' },
         { name: 'Nenhum', value: 'none' }
       ],
       default: 'none'
@@ -58,9 +58,9 @@ async function main() {
       message: 'Banco de dados?',
       choices: [
         { name: 'Postgres', value: 'postgres' },
-        { name: 'MySQL', value: 'mysql' },
-        { name: 'MongoDB', value: 'mongodb' },
-        { name: 'SQLite (dev)', value: 'sqlite' }
+        // { name: 'MySQL', value: 'mysql' },
+        // { name: 'MongoDB', value: 'mongodb' },
+        // { name: 'SQLite (dev)', value: 'sqlite' }
       ],
       default: 'postgres'
     },
