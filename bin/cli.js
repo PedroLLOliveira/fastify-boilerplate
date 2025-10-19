@@ -34,7 +34,7 @@ async function main() {
       type: 'list',
       message: 'Arquitetura de pastas?',
       choices: [
-        // { name: 'MVC', value: 'mvc' },
+        { name: 'MVC', value: 'mvc' },
         // { name: 'Clean Architecture', value: 'clean' },
         { name: 'Modular (partials)', value: 'modular' }
       ],
@@ -45,7 +45,7 @@ async function main() {
       type: 'list',
       message: 'ORM?',
       choices: [
-        // { name: 'Prisma', value: 'prisma' },
+        { name: 'Prisma', value: 'prisma' },
         { name: 'Sequelize', value: 'sequelize' },
         // { name: 'Mongoose (MongoDB)', value: 'mongoose' },
         { name: 'Nenhum', value: 'none' }
