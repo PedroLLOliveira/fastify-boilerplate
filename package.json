@@ -1,12 +1,22 @@
 {
   "name": "fastify-boilerplate",
-  "version": "1.0.5-beta.6",
+  "version": "2.0.0",
   "main": "index.js",
   "bin": {
     "create-fastify-boilerplate": "bin/cli.js"
   },
   "type": "module",
-  "keywords": [],
+  "files": [
+    "bin",
+    "lib",
+    "docs"
+  ],
+  "keywords": [
+    "fastify",
+    "boilerplate",
+    "cli",
+    "generator"
+  ],
   "scripts": {
     "test": "node --test tests/*.test.js",
     "test:watch": "node --test --watch tests/*.test.js",

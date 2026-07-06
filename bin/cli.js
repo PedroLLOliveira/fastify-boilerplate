@@ -5,136 +5,221 @@ import fsp from 'fs/promises';
 import path from 'path';
 import inquirer from 'inquirer';
 import { blue, green, yellow, red, cyan } from 'kolorist';
+import { Command } from 'commander';
 
-import { computeDeps } from '../lib/scaffold/deps.js';
-import { makeFolders } from '../lib/scaffold/makeFolders.js';
-import { writeBaseFiles } from '../lib/scaffold/writeBaseFiles.js';
-import { writePackageJson } from '../lib/scaffold/pkgjson.js';
-import { generateExamples } from '../lib/examples/index.js';
+import { renderProfile } from '../lib/v2/core/engine.js';
 
 const PKG = 'create-fastify-team';
 
 async function main() {
-  console.log(blue(`\n${PKG} — Gerador de projetos Fastify para times\n`));
+  console.log(blue(`\n${PKG} — Gerador de projetos Fastify para times (V2)\n`));
 
-  const answers = await inquirer.prompt([
-    { name: 'projectName', message: 'Nome do projeto (pasta destino):', default: 'fastify-app' },
-    {
-      name: 'language',
-      type: 'list',
-      message: 'Linguagem?',
-      choices: [
-        { name: 'TypeScript', value: 'ts' },
-        { name: 'JavaScript (ESM)', value: 'js' }
-      ],
-      default: 'ts'
-    },
-    {
-      name: 'architecture',
-      type: 'list',
-      message: 'Arquitetura de pastas?',
-      choices: [
-        // { name: 'MVC', value: 'mvc' },
-        // { name: 'Clean Architecture', value: 'clean' },
-        { name: 'Modular (partials)', value: 'modular' }
-      ],
-      default: 'mvc'
-    },
-    {
-      name: 'orm',
-      type: 'list',
-      message: 'ORM?',
-      choices: [
-        // { name: 'Prisma', value: 'prisma' },
-        { name: 'Sequelize', value: 'sequelize' },
-        // { name: 'Mongoose (MongoDB)', value: 'mongoose' },
-        { name: 'Nenhum', value: 'none' }
-      ],
-      default: 'none'
-    },
-    {
-      name: 'database',
-      type: 'list',
-      message: 'Banco de dados?',
-      choices: [
-        { name: 'Postgres', value: 'postgres' },
-        // { name: 'MySQL', value: 'mysql' },
-        // { name: 'MongoDB', value: 'mongodb' },
-        // { name: 'SQLite (dev)', value: 'sqlite' }
-      ],
-      default: 'postgres'
-    },
-    {
-      name: 'queryBuilder',
-      type: 'list',
-      message: 'Query Builder?',
-      choices: [
-        { name: 'Nenhum', value: 'none' },
-        { name: 'Knex', value: 'knex' },
-        { name: 'Kysely (TS-first)', value: 'kysely' }
-      ],
-      default: 'none'
-    },
-    {
-      name: 'eslint',
-      type: 'list',
-      message: 'ESLint?',
-      choices: [
-        { name: 'Sem ESLint', value: 'none' },
-        { name: 'Básico (eslint:recommended)', value: 'basic' },
-        { name: 'Com Prettier (recomendado)', value: 'prettier' }
-      ],
-      default: 'prettier'
-    },
-    { name: 'devcontainer', type: 'confirm', message: 'Criar Dev Container (VS Code)?', default: false }
-  ]);
+  const program = new Command();
+  program
+    .option('--profile <type>', 'Nome do profile determinístico (ex: modular-postgres-kysely)')
+    .option('--traits <list>', 'Traits separados por vírgula (ex: eslint-basic,vitest)')
+    .option('--projectName <name>', 'Nome do projeto destino')
+    .option('--packageManager <pm>', 'Gerenciador de pacotes', 'npm');
 
-  // Validações simples
-  if (answers.orm === 'mongoose' && answers.database !== 'mongodb') {
-    console.log(yellow('> Ajuste: Mongoose requer MongoDB. Alterando banco para MongoDB.'));
-    answers.database = 'mongodb';
+  program.parse(process.argv);
+  const options = program.opts();
+
+  const v2Profiles = ['minimal', 'modular', 'modular-postgres-kysely', 'modular-postgres-sequelize', 'mvc', 'clean'];
+  
+  let selectedProfile = options.profile;
+  let pName = options.projectName;
+  let selectedTraits = options.traits ? options.traits.split(',') : [];
+
+  // 1. Interactive prompt se o profile não for fornecido por flag
+  if (!selectedProfile) {
+    const initAnswers = await inquirer.prompt([
+      { 
+        name: 'projectName', 
+        message: 'Nome do projeto (pasta destino):', 
+        default: pName || 'fastify-app',
+        when: !pName 
+      },
+      {
+        name: 'profileChoice',
+        type: 'list',
+        message: 'Como deseja iniciar seu projeto?',
+        choices: [
+          { name: '🟢 Minimal (Apenas rotas e estrutura base)', value: 'minimal' },
+          { name: '🟡 Modular (Domínios separados, sem banco)', value: 'modular' },
+          { name: '🔵 Modular + Postgres + Kysely', value: 'modular-postgres-kysely' },
+          { name: '🟣 Modular + Postgres + Sequelize', value: 'modular-postgres-sequelize' },
+          new inquirer.Separator(),
+          { name: '🛠️  Personalizado (Montar stack V2 passo a passo)', value: 'custom' }
+        ]
+      }
+    ]);
+
+    pName = pName || initAnswers.projectName;
+
+    if (initAnswers.profileChoice === 'custom') {
+      console.log(cyan('\n> Vamos configurar seu profile V2 sob medida...\n'));
+      
+      const customAnswers = await inquirer.prompt([
+        {
+          name: 'arch',
+          type: 'list',
+          message: '1. Arquitetura base:',
+          choices: [
+            { name: 'Modular (Recomendado, escalável por domínio)', value: 'modular' },
+            { name: 'MVC (Controller-Service-Repository)', value: 'mvc' },
+            { name: 'Clean Architecture (Isolamento de UseCases)', value: 'clean' },
+            { name: 'Minimal (Apenas 1 arquivo de rota principal)', value: 'minimal' }
+          ]
+        },
+        {
+          name: 'db',
+          type: 'list',
+          message: '2. Banco de dados:',
+          choices: [
+            { name: 'PostgreSQL (via Docker Compose)', value: 'postgres' },
+            { name: 'Nenhum', value: 'none' }
+          ],
+          when: (ans) => ans.arch === 'modular'
+        },
+        {
+          name: 'orm',
+          type: 'list',
+          message: '3. Ferramenta de Persistência:',
+          choices: [
+            { name: 'Kysely (Type-safe SQL Query Builder)', value: 'kysely' },
+            { name: 'Sequelize (Active Record ORM)', value: 'sequelize' }
+          ],
+          when: (ans) => ans.db === 'postgres'
+        },
+        {
+          name: 'linter',
+          type: 'list',
+          message: '4. Linter e formatação:',
+          choices: [
+            { name: 'ESLint Básico', value: 'eslint-basic' },
+            { name: 'ESLint + Prettier', value: 'eslint-prettier' },
+            { name: 'Nenhum', value: 'none' }
+          ]
+        },
+        {
+          name: 'precommit',
+          type: 'confirm',
+          message: '5. Configurar Husky + lint-staged (Pre-commit)?',
+          default: true
+        },
+        {
+          name: 'testFramework',
+          type: 'list',
+          message: '6. Framework de Testes:',
+          choices: [
+            { name: 'Node Native Test Runner (node:test)', value: 'node-native-test' },
+            { name: 'Vitest', value: 'vitest' },
+            { name: 'Nenhum', value: 'none' }
+          ]
+        }
+      ]);
+
+      if (customAnswers.arch === 'minimal') {
+        selectedProfile = 'minimal';
+      } else if (customAnswers.arch === 'mvc') {
+        selectedProfile = 'mvc';
+        if (customAnswers.db && customAnswers.db !== 'none') {
+           console.log(yellow('> Obs: A integração com banco de dados no MVC ainda está em desenvolvimento na V2. O profile base MVC será gerado.'));
+        }
+      } else if (customAnswers.arch === 'clean') {
+        selectedProfile = 'clean';
+        if (customAnswers.db && customAnswers.db !== 'none') {
+           console.log(yellow('> Obs: A integração com banco de dados na Clean Arch ainda está em desenvolvimento na V2. O profile base Clean será gerado.'));
+        }
+      } else if (customAnswers.arch === 'modular') {
+        if (!customAnswers.db || customAnswers.db === 'none') {
+          selectedProfile = 'modular';
+        } else if (customAnswers.db === 'postgres') {
+          if (customAnswers.orm === 'kysely') selectedProfile = 'modular-postgres-kysely';
+          else if (customAnswers.orm === 'sequelize') selectedProfile = 'modular-postgres-sequelize';
+        }
+      }
+
+      if (customAnswers.linter !== 'none') selectedTraits.push(customAnswers.linter);
+      if (customAnswers.precommit) selectedTraits.push('husky-lint-staged');
+      if (customAnswers.testFramework !== 'none') selectedTraits.push(customAnswers.testFramework);
+
+    } else {
+      selectedProfile = initAnswers.profileChoice;
+      // Default traits para escolhas rápidas pra manter consistência com o que existia
+      selectedTraits = ['eslint-basic', 'node-native-test'];
+    }
   }
-  if (answers.orm === 'sequelize' && answers.database === 'mongodb') {
-    console.log(yellow('> Ajuste: Sequelize não suporta MongoDB. Alterando ORM para Prisma.'));
-    answers.orm = 'prisma';
+
+  // 2. V2 Bypass & Engine Execution
+  if (!v2Profiles.includes(selectedProfile)) {
+    console.error(red(`\nErro: Profile desconhecido ou não resolvido: ${selectedProfile}`));
+    process.exit(1);
   }
 
-  if (['knex', 'kysely'].includes(answers.queryBuilder) && answers.database === 'mongodb') {
-    console.log(yellow('> Ajuste: Query builders SQL requerem um banco SQL. Alterando banco para Postgres.'));
-    answers.database = 'postgres';
+  const root = path.resolve(process.cwd(), pName);
+  console.log(blue(`\n> Iniciando motor V2... Resolvendo dependências para: ${selectedProfile}`));
+  
+
+  let targetProfile;
+  if (selectedProfile === 'minimal') {
+    const { minimalProfile } = await import('../lib/v2/profiles/minimal.js');
+    targetProfile = minimalProfile;
+  } else if (selectedProfile === 'modular') {
+    const { modularProfile } = await import('../lib/v2/profiles/modular.js');
+    targetProfile = modularProfile;
+  } else if (selectedProfile === 'mvc') {
+    const { mvcProfile } = await import('../lib/v2/profiles/mvc.js');
+    targetProfile = mvcProfile;
+  } else if (selectedProfile === 'clean') {
+    const { cleanProfile } = await import('../lib/v2/profiles/clean.js');
+    targetProfile = cleanProfile;
+  } else if (selectedProfile === 'modular-postgres-kysely') {
+    const { modularPgKyselyProfile } = await import('../lib/v2/profiles/modular-pg-kysely.js');
+    targetProfile = modularPgKyselyProfile;
+  } else if (selectedProfile === 'modular-postgres-sequelize') {
+    const { modularPgSequelizeProfile } = await import('../lib/v2/profiles/modular-postgres-sequelize.js');
+    targetProfile = modularPgSequelizeProfile;
   }
 
-  if (answers.queryBuilder !== 'none' && answers.orm !== 'none') {
-    console.log(yellow('> Observação: usando Query Builder como camada principal. Desativando ORM.'));
-    answers.orm = 'none';
+  // Carregar os traits solicitados
+  const loadedTraits = [];
+  for (const t of selectedTraits) {
+    if (t.startsWith('eslint')) {
+      const mod = await import('../lib/v2/traits/linter.js');
+      loadedTraits.push(t === 'eslint-basic' ? mod.eslintBasicTrait : mod.eslintPrettierTrait);
+    } else if (t === 'husky-lint-staged') {
+      const mod = await import('../lib/v2/traits/precommit.js');
+      loadedTraits.push(mod.huskyLintStagedTrait);
+    } else if (t === 'node-native-test') {
+      const mod = await import('../lib/v2/traits/testing.js');
+      loadedTraits.push(mod.nodeNativeTestTrait);
+    } else if (t === 'vitest') {
+      const mod = await import('../lib/v2/traits/testing.js');
+      loadedTraits.push(mod.vitestTrait);
+    }
   }
 
-  const root = path.resolve(process.cwd(), answers.projectName);
-  await fsp.mkdir(root, { recursive: true });
-
-  // Pastas + arquivos base
-  const ctx = { root, answers, isTS: answers.language === 'ts', ext: answers.language === 'ts' ? 'ts' : 'js' };
-  await makeFolders(ctx);
-  const { deps, devDeps } = computeDeps(ctx);
-  await writeBaseFiles({ ...ctx, deps, devDeps });
-
-  // 🔥 Geração dos EXEMPLOS por linguagem (tudo aqui dentro é segregado)
-  await generateExamples(ctx);
-
-  // package.json
-  await writePackageJson({ ...ctx, deps, devDeps });
-
+  await renderProfile(targetProfile, loadedTraits, root, pName);
+  
   console.log('\n' + green('✅ Projeto criado em: ') + cyan(root));
   console.log('\nPróximos passos:');
-  console.log(blue(`  cd ${answers.projectName}`));
-  console.log(blue('  cp .env.example .env   # ajuste DATABASE_URL'));
-  console.log(blue('  npm install'));
-  if (answers.orm === 'prisma') {
-    console.log(blue('  npx prisma generate'));
-    if (answers.database !== 'mongodb') console.log(blue('  npx prisma migrate dev'));
+  console.log(blue(`  cd ${pName}`));
+  console.log(blue(`  ${options.packageManager} install`));
+  
+  // Custom message instructions based on features
+  if (selectedProfile.includes('postgres')) {
+    console.log(blue('  cp .env.example .env'));
+    console.log(blue('  docker compose up -d'));
+    if (selectedProfile.includes('sequelize')) {
+      console.log(blue('  npx sequelize-cli db:migrate'));
+    } else if (selectedProfile.includes('kysely')) {
+      console.log(blue('  npm run db:migrate'));
+    }
   }
-  console.log(blue(ctx.isTS ? '  npm run dev' : '  npm run dev'));
-  console.log('\nBoas builds! 🚀\n');
+  
+  console.log(blue(`  ${options.packageManager} run dev\n`));
+  console.log(green('Boas builds! 🚀\n'));
 }
 
 main().catch((e) => {

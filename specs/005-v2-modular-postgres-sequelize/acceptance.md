@@ -1,0 +1,12 @@
+# Critérios de Aceite — V2 Modular Postgres Sequelize
+
+| Critério | Descrição | Status |
+|---|---|---|
+| CA-001 | O gerador permite, por meio do uso da CLI com o argumento exato `--profile modular-postgres-sequelize`, instanciar o pacote completo de código em uma execução limpa e ininterrupta sem necessitar de input adicional (non-interactive). | pendente |
+| CA-002 | A geração TypeScript resulta em validação estrita sem erros pelo compilador (`npm run build` transpila sem warnings) e respeitando formatação nativa (`npm run lint` ou similar local se aplicável). | pendente |
+| CA-003 | A arquitetura do gerador protege contra Memory/Connection Leaks. O plugin `db-sequelize.ts` injetado na raiz intercepta explicitamente a destruição do evento nativo (`onClose` de `FastifyInstance`) para executar invariavelmente `sequelize.close()`. | pendente |
+| CA-004 | Conforme o pacto de Spec 004, o verificador de estado de rede (`/ready` e `/health`) avalia a interconectividade efetiva e viva usando `sequelize.authenticate()`. Falhas brutas e lentidões produzem retornos tolerantes, como `503 Service Unavailable`, sem provocar indisponibilidade da própria infraestrutura HTTP. | pendente |
+| CA-005 | Restrição de Identidade Global: Handler Global do app captura de forma polimórfica os incidentes mapeados de conflitos via objetos, erradicando validações textuais literais (não há mais `if (error.message === '...mensagem específica...')`) ao lidar com infrações em Chaves Únicas e projetar `409 Conflict`. | pendente |
+| CA-006 | A pureza do Handler é atestável por auditoria visual. Nenhum arquivo `*.handler.ts` ou de rota possui sentenças `import { ... } from 'sequelize'` ou implementa lógica ORM; todo repasse de dados e chamadas transitam perante isolamento estrito via repositórios dedicados. | pendente |
+| CA-007 | Execução de teste massivo. O motor Eval End-to-End inicia a containerização de banco Postgres real a frio, perfaz sequencialmente um setup estrutural base via migrações do Sequelize CLI localmente configuradas (`db:migrate`) e invoca testes API unitários autênticos na sequência. | pendente |
+| CA-008 | Integridade da Linha Base: A criação e implementação de artefatos do Sequelize neste novo diretório de profile é fisicamente dissociada dos diretórios `minimal` e `modular-postgres-kysely`. O Eval geral em loop passará "Verde" preservando a validade histórica dos vizinhos sem poluir o pipeline preexistente. | pendente |

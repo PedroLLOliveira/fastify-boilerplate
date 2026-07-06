@@ -1,144 +1,89 @@
 # fastify-boilerplate
 
-![Fastify](https://img.shields.io/badge/Fastify-%5E4.0.0-blue?style=flat-square&logo=fastify)
-![Node.js](https://img.shields.io/badge/Node.js-%5E18.0.0-green?style=flat-square&logo=node.js)
+![Fastify](https://img.shields.io/badge/Fastify-%5E5.0.0-blue?style=flat-square&logo=fastify)
+![Node.js](https://img.shields.io/badge/Node.js-%3E%3D20.0.0-green?style=flat-square&logo=node.js)
+![TypeScript](https://img.shields.io/badge/TypeScript-%5E5.5.0-blue?style=flat-square&logo=typescript)
 ![GitHub Actions](https://img.shields.io/badge/GitHub%20Actions-CI/CD-blue?style=flat-square&logo=github-actions)
-![Sequelize](https://img.shields.io/badge/Sequelize-%5E6.0.0-blue?style=flat-square&logo=sequelize)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-%5E14.0-blue?style=flat-square&logo=postgresql)
-![Jest](https://img.shields.io/badge/Jest-%5E29.0.0-red?style=flat-square&logo=jest)
 
+🚀 **Fastify Boilerplate** é um **gerador de projetos Fastify** para times e solo: você cria um novo app Node.js já com **arquitetura organizada, padrões de código, testes, CI** e **ambiente de desenvolvimento** prontos.
 
-🚀 **Fastify Boilerplate** é um **gerador de projetos Fastify** para times e solo: você cria um novo app Node.js já com **arquitetura organizada, padrões de código, testes, CI** e **ambiente de desenvolvimento** prontos. Ideal para acelerar kickoffs, padronizar entre squads e manter a casa em ordem sem perder velocidade.
+> ⚠️ **Aviso de Refatoração V2:** O projeto está passando por uma reescrita para garantir o uso rigoroso de TypeScript ESM (NodeNext), Fastify v5, dependências com versões fixas determinísticas e execução end-to-end garantida.
+
+Atualmente, a fundação V2 suporta os profiles **Minimal** e **Modular** (ambos 100% testáveis nativamente). As demais opções (ORMs, MVC, etc) pertencem ao fluxo Interativo Legacy (V1) e poderão apresentar conflitos se misturados até que ganhem suas specs definitivas na V2.
 
 ---
 
-## ✨ O que vem pronto
+## ✨ O que vem pronto (V2 - Profiles Minimal & Modular)
 
-- ✅ **Fastify** → servidor web leve e veloz para Node.js.
-- ✅ **Dev Container** → ambiente padronizado em Docker para todos trabalharem igual.
-- ✅ **ORM + PostgreSQL** → escolha entre Sequelize (default), Prisma ou TypeORM.
-- ✅ **GitHub Actions** → pipeline de CI/CD para testes e qualidade.
+- ✅ **Fastify v5** → servidor web leve e veloz para Node.js.
+- ✅ **TypeScript ESM Puro** → `type: module` e `moduleResolution: NodeNext`.
+- ✅ **Testes Nativos** → Configuração do framework `node:test` (via tsx) sem dependências pesadas, com app.inject().
 - ✅ **ESLint** → linting consistente.
-- ✅ **Jest** → testes (com suporte a TypeScript no projeto de testes).
-
-> Por que essas escolhas?
-> - "**Performance e DX** com Fastify";
-> - "**Ambiente idêntico** entre devs com Dev Container";
-> - "**ORMs maduros + PostgresSQL** para escalar com segurança";
-> - "**Automação** com Actions; **qualidade contínua** com ESLint + Jest";
+- ✅ **Composição estática** → Divisão rigorosa entre `app.ts` (setup e binds) e `server.ts` (socket handler e shutdown).
 
 ---
 
 ## 🚀 Instalação & uso
-> Você pode usar globalmente (CLI no PATH) ou pontual com `npx`
 
-### Opção A) Global (recomendado para uso frequente)
+Você pode usar o gerador pontualmente usando `npx`.
+
+### Gerando o projeto suportado (V2 - Minimal ou Modular Profile)
+
+Para criar o projeto usando o motor determinístico V2, que provê uma base impecável em TS ESM e testável nativamente:
+
 ```bash
-npm i -g fastify-boilerplate
-fastify-boilerplate
+npx fastify-boilerplate --profile modular --projectName meu-app
+# ou --profile minimal
 ```
 
-### Opção B) Pontual com npx (zero instalação)
+Isso fará o *bypass* do assistente antigo e usará o gerador estrito que garante a compatibilidade e build sem problemas com o Node v20+.
+
+### Fluxo Interativo Legado (V1)
+
+Caso precise gerar projetos com Sequelize, Knex ou arquitetura MVC, você pode acessar o assistente v1. **Atenção: essas arquiteturas estão sem Evals E2E no momento e podem precisar de ajustes em seus imports/builds**.
+
 ```bash
-npx fastify-boilerplate@latest
+npx fastify-boilerplate
 ```
 
-O CLI abrirá um **wizard interativo** para você escolher:
-- **Nome do projeto**
-- **Arquitetura** (ex.: DDD modular ou básica)
-- **ORM** (Sequelize/Prisma/TypeORM)
-- **Ativar Dev Container**
-- **Configurar CI(Github Actions)**
-> Dica: após gerar, os scripts padrão do projeto incluem `dev`, `lint`, `test` e `build`.
+O CLI abrirá um wizard interativo onde você poderá explorar as antigas opções.
 
 ---
 
-## 🧰 Tecnologias (e por que elas estão aqui)
+## 🧪 Scripts úteis (no projeto gerado na V2)
 
-| Tecnologia        | Papel no projeto | Por que usar |
-|------------------|------------|-----------------|
-| **Fastify** | Framework HTTP | Alto desempenho + ecossistema robusto |
-| **Dev Container** | Ambiente dev | Mesmo setup para todos do time |
-| **Sequelize** | ORM (default) | Simples, estável e direto com SQL |
-| **Prisma** | ORM (opcional) | DX excelente, schema-first e tipos |
-| **TypeORM** | ORM (opcional) | Data Mapper com decorators e migrations |
-| **PostgreSQL** | Banco de dados | Confiável, escalável, recursos avançados |
-| **GitHub Actions** | CI/CD | Testes e checks automatizados |
-| **ESLint** | Qualidade | Padroniza e previne erros comuns |
-| **Jest (TS)** | Testes | Unitários/integração simples e rápidos |
+Após gerar o projeto (Minimal ou Modular), a sua aplicação já conterá no `package.json`:
 
-As opções acima aparecem como escolhas no gerador e também existem **exemplos de arquitetura e ORMs** no repositório
-
----
-
-## 🧪 Scripts úteis (no projeto gerado)
 ```bash
-npm run dev        # inicia o servidor em desenvolvimento
+npm run dev        # inicia o servidor em desenvolvimento via tsx
+npm run build      # limpa e compila o dist/ em NodeNext
+npm test           # roda a suite nativa (node --test) via tsx
 npm run lint       # executa o ESLint
-npm test           # roda a suite de testes
-npm run build      # gera build de produção
+npm start          # roda a versão de produção gerada no dist
 ```
-
-Esses scripts já vêm configurados para você começar a trabalhar imediatamente.
-
----
-
-## 🧱 Exemplos de projetos que você pode gera
-A CLI oferece variações de **arquitetura** e **ORM**. Aqui vão exemplos tpipicos de uso:
-
-### 1) API básica com Sequelize (default)
-- **Quando usar**: CRUDs rápidos, time acostumado com Active Record.
-- **Como gerar**: no wizard, escolha **Arquitetura Básica + Sequelize**.
-- **Scripts promps**: `dev`, `lint`, `test` e `build`.
-
-### 2) API modular (DDD) com Sequelize
-- **Quando usar**: domínios bem definidos, times grandes ou mpultiplos contextos.
-- **Como gerar**: no wizard, escolha **Arquitetura DDD Modular + Sequelize**.
-- **Beneficíos**: separação por dompinios, crescimento sustentável do código.
-   (O repositório traz referência de DDD modular)
-
-### 3) API com Prisma
-- **Quando usar**: produtividade + tipos fortes, migrações simples, DX moderna.
-- **Como gerar**: no wizard, escolha **Prisma**.
-- **Resultado**: projeto já apontado para PostgresSQL e pronto para `prisma migrate`. 
-
-### 4) API com TypeORM
-- **Quando usar**: preferência por Data Mapper, decorators e entities.
-- **Como gerar**: no wizard, escolha **TypeORM**
-> Observação: as opções de arquitetura e ORMs citadas fazem parte do escopo descrito no repositório e seus exemplos. Ajustes/novas variações podem surgir conforme evolução do projeto.
 
 ---
 
 ## 🧭 Roadmap sugerido após gerar o projeto
 
-1. Criar DB local e configurar `.env`.
-2. Subir no Dev Container (se você optou por usar).
-3. Rodar `npm run dev` e validar `http://localhost:3000`.
-4. Escrever os primeiros testes (`npm teste`).
-5. Configurar secrets do repositório (se for usar Actions para deploy).
+1. Acesse o diretório: `cd meu-app`
+2. Instale as dependências: `npm install`
+3. Crie a cópia do env local: `cp .env.example .env`
+4. Rode a suite de testes: `npm test`
+5. Suba em dev `npm run dev` e chame `http://localhost:3000/health`.
 
 ---
 
 ## 🤝 Como contribuir
-Contribuições são super bem-vindas! Siga este passo a passo:
+
+Contribuições são super bem-vindas! Nosso foco no momento é migrar os antigos templates v1 (ORMs, Modular) para o motor determinístico da v2.
+
 1. **Faça um fork** do repositório.
-2. **Crie uma branch** descritiva:
-   ```bash
-   git checkout -b feat/cli-prompts-orm
-   ```
-3. **Instale as deps e rode testes/lint**:
+2. **Crie uma branch** descritiva (ex: `feat/v2-profile-modular`)
+3. **Instale as deps e rode testes**:
    ```bash
    npm ci
-   npm run lint
    npm test
    ```
-4. **Implemente sua melhoria** (código, docs, templates, exemplos).
-5. **Abra um Pull Request** explicando o contexto, o "porquê" e como validar.
-6. Se sua mudança alterar comportamento do gerador, **acidione/atualize exemplos** e **changelog**.
-> Dicas:
-> - "Prefica **commits atômcos** e mensagens no padrão conventional commits (`feat:`, `fix:`, `docs:`...)"
-> - "Inclua **testes** quando fizer sentido."
-> - "Mantenha a **qualidade**: o pipeline de CI (Github Actions) confere o básico."
-
-
-
+4. **Implemente sua melhoria**
+5. Abra um Pull Request e assegure-se de que os testes end-to-end de geração de pastas temporárias estejam passando (nenhum projeto deve ser quebrado!).
