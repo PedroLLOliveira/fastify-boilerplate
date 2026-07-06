@@ -36,11 +36,19 @@ test('V2 E2E Eval - Profile Minimal', async (t) => {
   try {
     console.log('[E2E] Generating project in', tmpDir);
     // 1. Generate App
-    await runCommand('node', [CLI_PATH, '--profile', 'minimal', '--traits', 'eslint-basic,node-native-test', '--projectName', projectName], tmpDir);
+    await runCommand('node', [CLI_PATH, '--profile', 'minimal', '--projectName', projectName], tmpDir);
     
     // Check if it was created
     const stats = await fs.stat(path.join(projectPath, 'package.json'));
     assert.ok(stats.isFile(), 'package.json should exist');
+
+    const pkgContent = await fs.readFile(path.join(projectPath, 'package.json'), 'utf8');
+    const pkg = JSON.parse(pkgContent);
+    assert.ok(pkg.scripts.dev, 'Should have dev script');
+    assert.ok(pkg.scripts.build, 'Should have build script');
+    assert.ok(pkg.scripts.start, 'Should have start script');
+    assert.ok(pkg.scripts.lint, 'Should have lint script');
+    assert.ok(pkg.scripts.test, 'Should have test script');
 
     console.log('[E2E] Installing dependencies (this may take a few seconds)...');
     // 2. Install Dependencies

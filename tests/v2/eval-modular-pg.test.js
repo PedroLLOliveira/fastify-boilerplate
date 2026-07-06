@@ -56,8 +56,15 @@ test('V2 E2E Eval - Profile Modular PG Kysely', async (t) => {
 
   try {
     console.log('[E2E-PG] Generating project in', tmpDir);
-    await runCommand('node', [CLI_PATH, '--profile', 'modular-postgres-kysely', '--traits', 'eslint-basic,node-native-test', '--projectName', projectName], tmpDir);
+    await runCommand('node', [CLI_PATH, '--profile', 'modular-postgres-kysely', '--projectName', projectName], tmpDir);
     
+    const pkgContent = await fs.readFile(path.join(projectPath, 'package.json'), 'utf8');
+    const pkg = JSON.parse(pkgContent);
+    assert.ok(pkg.scripts.dev, 'Should have dev script');
+    assert.ok(pkg.scripts.build, 'Should have build script');
+    assert.ok(pkg.scripts.start, 'Should have start script');
+    assert.ok(pkg.scripts.lint, 'Should have lint script');
+    assert.ok(pkg.scripts.test, 'Should have test script');
     console.log('[E2E-PG] Installing dependencies...');
     await runCommand('npm', ['install'], projectPath);
 

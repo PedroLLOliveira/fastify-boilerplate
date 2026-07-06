@@ -182,9 +182,27 @@ async function main() {
     targetProfile = modularPgSequelizeProfile;
   }
 
+  // Resolver traits (merging explicit traits with profile default traits)
+  const finalTraits = new Set(targetProfile.defaultTraits || []);
+  for (const t of selectedTraits) {
+    if (t === 'none') continue;
+    
+    // Evitar conflitos substituindo traits da mesma categoria
+    if (t.startsWith('eslint')) {
+      finalTraits.delete('eslint-basic');
+      finalTraits.delete('eslint-prettier');
+    }
+    if (t === 'node-native-test' || t === 'vitest') {
+      finalTraits.delete('node-native-test');
+      finalTraits.delete('vitest');
+    }
+    
+    finalTraits.add(t);
+  }
+
   // Carregar os traits solicitados
   const loadedTraits = [];
-  for (const t of selectedTraits) {
+  for (const t of finalTraits) {
     if (t.startsWith('eslint')) {
       const mod = await import('../lib/v2/traits/linter.js');
       loadedTraits.push(t === 'eslint-basic' ? mod.eslintBasicTrait : mod.eslintPrettierTrait);

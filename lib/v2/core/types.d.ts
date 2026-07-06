@@ -17,6 +17,7 @@ export type ProfileDefinition = {
   dependencies: DependencyManifest;
   files: FileManifest[];
   checks: string[];
+  defaultTraits?: string[];
 };
 
 export type TraitDefinition = {
