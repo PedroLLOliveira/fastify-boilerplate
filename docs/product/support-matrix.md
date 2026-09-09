@@ -10,8 +10,8 @@
 | `modular` | modular | none | suportado | `eval-modular.test.js` |
 | `modular-postgres-kysely` | modular | PostgreSQL + Kysely | suportado | `eval-modular-pg.test.js` |
 | `modular-postgres-sequelize` | modular | PostgreSQL + Sequelize | suportado | `eval-modular-pg-sequelize.test.js` |
-| `mvc` | MVC | none | experimental | ausente |
-| `clean` | Clean | none | experimental | ausente |
+| `mvc` | MVC | none | suportado | `eval-mvc.test.js` |
+| `clean` | Clean | none | suportado | `eval-clean.test.js` |
 
 ## Política
 

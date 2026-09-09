@@ -75,6 +75,7 @@ const PROFILES = [
   { id: 'minimal', needsDocker: false },
   { id: 'modular', needsDocker: false },
   { id: 'mvc', needsDocker: false },
+  { id: 'clean', needsDocker: false },
   { id: 'modular-postgres-kysely', needsDocker: true },
   { id: 'modular-postgres-sequelize', needsDocker: true }
 ];
@@ -121,9 +122,3 @@ for (const { id, needsDocker } of PROFILES) {
     }
   });
 }
-
-// `clean` está com status: 'experimental' (Fase 0) por um bug pré-existente e
-// não relacionado a este eval: o app.ts gerado importa um caminho que não
-// existe (achado 03 do roadmap), então nem `npm run build`/`dev` funcionam.
-// Corrigir isso é escopo da Fase 2 — só então este profile entra aqui.
-test('V2 First-Command Eval - "npm install && npm run dev" - clean', { skip: 'clean está quebrado (achado 03); conserto e eval entram na Fase 2' }, () => {});
