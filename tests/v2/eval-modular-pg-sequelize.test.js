@@ -13,7 +13,8 @@ const CLI_PATH = path.resolve(__dirname, '../../bin/cli.js');
 
 function runCommand(command, args, cwd) {
   return new Promise((resolve, reject) => {
-    const proc = spawn(command, args, { cwd, shell: true, stdio: 'pipe' });
+    const { NODE_TEST_CONTEXT, ...childEnv } = process.env;
+    const proc = spawn(command, args, { cwd, shell: true, stdio: 'pipe', env: childEnv });
     let stdout = '';
     let stderr = '';
     proc.stdout.on('data', (data) => { stdout += data.toString(); });

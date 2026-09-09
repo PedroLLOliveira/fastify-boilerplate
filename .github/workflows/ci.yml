@@ -1,0 +1,34 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: test (node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ['20', '22']
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+
+      - run: npm ci
+
+      - name: support-matrix.md em dia com os profiles
+        run: npm run docs:support-matrix:check
+
+      - name: Unit tests (motor V1 legado)
+        run: npm run test:unit
+
+      - name: E2E evals (motor V2 — geração, install, typecheck, lint, test, runtime)
+        run: npm run test:e2e
