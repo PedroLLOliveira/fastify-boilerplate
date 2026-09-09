@@ -18,6 +18,7 @@ export type ProfileDefinition = {
   files: FileManifest[];
   checks: string[];
   defaultTraits?: string[];
+  scripts?: Record<string, string>;
 };
 
 export type TraitDefinition = {

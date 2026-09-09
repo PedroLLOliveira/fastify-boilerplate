@@ -84,7 +84,54 @@ Um **gerador de projetos Fastify** (`npx fastify-boilerplate`): CLI interativo o
 5. Atualizar `README.md` para remover a menção ao fluxo V1 legado, já inexistente. Ainda em aberto.
 6. Decidir o que fazer com os achados de `docs/migration/current-baseline-findings.md` (fechar como resolvidos-por-remoção da V1, ou mover para uma spec de remoção formal). Ainda em aberto — depende do item 1.
 
-## 8. Ambiente de teste verificado nesta sessão
+## 8. Fase 1 do roadmap — honrar `npm install && npm run dev`
+
+Implementada nesta sessão (achados 01, 02, 12 do roadmap "Roadmap do primeiro comando"):
+
+- `lib/v2/core/engine.js` agora grava `.env` ao lado de `.env.example` com os mesmos valores de
+  dev (mecanismo genérico: qualquer profile que declare `.env.example` ganha `.env` de graça).
+  Resolve achado 01 — antes o app quebrava com stack trace no primeiro `npm run dev` porque
+  `database.ts` chama `loadEnv()` no topo do módulo e `DATABASE_URL` nunca existia sem cópia manual.
+- `ProfileDefinition` ganhou um campo opcional `scripts` (mesclado em `combinedScripts` no
+  engine, mesmo mecanismo que já existia para `trait.scripts`). Os profiles `modular-postgres-kysely`
+  e `modular-postgres-sequelize` agora declaram `db:migrate`, `db:seed`, `db:reset`, `predev` e
+  `dev:no-infra`. Resolve achado 02 — `npm run db:migrate`, que o CLI já mandava rodar, agora existe.
+- `predev` sobe o Postgres (`docker compose up -d --wait`), roda a migration e o seed antes do
+  `dev` — `npm run dev` é literalmente o único comando, com `dev:no-infra` como escape para quem
+  já tem um Postgres próprio.
+- `docker-compose.yml` dos dois profiles Postgres ganhou `healthcheck` (`pg_isready`) e volume
+  nomeado (resolve achado 12 — antes `docker compose down` sem `-v` já não devia apagar dados, mas
+  não havia volume nomeado nenhum, e não havia como o `--wait` do compose saber quando o banco
+  estava pronto).
+- Novo `src/db/scripts/seed.ts` em cada profile Postgres (idempotente — `ON CONFLICT DO NOTHING`
+  no Kysely, `findOrCreate` no Sequelize) garante que o primeiro `GET /users` já tem dado.
+- `bin/cli.js` ganhou `--install` (roda o package manager) e `--git` (init + commit inicial).
+  Achado de sessão: a primeira implementação usava `spawnSync(..., { shell: true })` para o
+  `git commit -m "<mensagem com espaços>"`, e o shell quebrava a mensagem em argumentos soltos
+  (`git commit -m chore: scaffold inicial...` virava 4 pathspecs inválidos). Corrigido removendo
+  `shell: true` das chamadas `git` (não precisam de shell; só `npm install` continua com
+  `shell: true`, necessário no Windows para resolver `npm.cmd`).
+- Novo eval `tests/v2/eval-first-command.test.js`: gera cada profile em diretório limpo, roda
+  **só** `npm install` e `npm run dev` (processo em background, próprio grupo de processos para
+  poder derrubar `predev`/`tsx watch`/node respawnado de uma vez), confere `/health` (todos) e
+  `/ready` + `GET /users` com dado seedado (profiles Postgres). Cobre `minimal`, `modular`, `mvc`,
+  `modular-postgres-kysely`, `modular-postgres-sequelize` — os 5 profiles que já funcionam.
+  `clean` entra como `test(..., { skip: '...' })` explícito, não como lacuna silenciosa: está
+  quebrado por um bug não relacionado (achado 03, TS2307), cujo conserto é escopo da Fase 2.
+- Os evals antigos `eval-modular-pg.test.js`/`eval-modular-pg-sequelize.test.js` foram atualizados
+  para consumir os novos scripts (`npm run db:migrate`, `docker compose up -d --wait`) em vez dos
+  workarounds manuais (`cp .env.example .env`, `npx tsx .../migrate.ts`, polling de porta) que
+  existiam só porque esses achados ainda não tinham sido corrigidos.
+
+Verificado rodando de ponta a ponta (`npm test` completo, e manualmente com `curl` contra
+`/health`, `/ready` e `/users` nos dois profiles Postgres) — sem falhas, sem containers/processos
+órfãos após teardown.
+
+**Em aberto, deliberadamente fora desta fase:** `mvc`/`clean` continuam `experimental` — este eval
+prova que o "primeiro comando" funciona para `mvc`, mas não substitui o eval completo
+(lint+build+test+contrato) que a Fase 2 exige para promovê-lo de volta a `supported`.
+
+## 9. Ambiente de teste verificado nesta sessão
 
 Estado anterior (referência histórica):
 ```
