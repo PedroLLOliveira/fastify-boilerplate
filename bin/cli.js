@@ -27,7 +27,7 @@ async function main() {
   program.parse(process.argv);
   const options = program.opts();
 
-  const v2Profiles = ['minimal', 'modular', 'modular-postgres-kysely', 'modular-postgres-sequelize', 'mvc', 'clean'];
+  const v2Profiles = ['minimal', 'modular', 'modular-cors', 'modular-postgres-kysely', 'modular-postgres-sequelize', 'mvc', 'clean'];
   
   let selectedProfile = options.profile;
   let pName = options.projectName;
@@ -49,6 +49,7 @@ async function main() {
         choices: [
           { name: '🟢 Minimal (Apenas rotas e estrutura base)', value: 'minimal' },
           { name: '🟡 Modular (Domínios separados, sem banco)', value: 'modular' },
+          { name: '🟠 Modular + CORS habilitado', value: 'modular-cors' },
           { name: '🔵 Modular + Postgres + Kysely', value: 'modular-postgres-kysely' },
           { name: '🟣 Modular + Postgres + Sequelize', value: 'modular-postgres-sequelize' },
           new inquirer.Separator(),
@@ -174,6 +175,9 @@ async function main() {
   } else if (selectedProfile === 'modular') {
     const { modularProfile } = await import('../lib/v2/profiles/modular.js');
     targetProfile = modularProfile;
+  } else if (selectedProfile === 'modular-cors') {
+    const { modularCorsProfile } = await import('../lib/v2/profiles/modular-cors.js');
+    targetProfile = modularCorsProfile;
   } else if (selectedProfile === 'mvc') {
     const { mvcProfile } = await import('../lib/v2/profiles/mvc.js');
     targetProfile = mvcProfile;

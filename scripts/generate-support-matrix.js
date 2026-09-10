@@ -15,6 +15,7 @@ import { fileURLToPath } from 'url';
 
 import { minimalProfile } from '../lib/v2/profiles/minimal.js';
 import { modularProfile } from '../lib/v2/profiles/modular.js';
+import { modularCorsProfile } from '../lib/v2/profiles/modular-cors.js';
 import { modularPgKyselyProfile } from '../lib/v2/profiles/modular-pg-kysely.js';
 import { modularPgSequelizeProfile } from '../lib/v2/profiles/modular-postgres-sequelize.js';
 import { mvcProfile } from '../lib/v2/profiles/mvc.js';
@@ -36,6 +37,7 @@ const STATUS_LABEL = {
 const PROFILES = [
   { profile: minimalProfile, arquitetura: 'minimal', persistencia: 'none', evalFile: 'tests/v2/eval-minimal.test.js' },
   { profile: modularProfile, arquitetura: 'modular', persistencia: 'none', evalFile: 'tests/v2/eval-modular.test.js' },
+  { profile: modularCorsProfile, arquitetura: 'modular', persistencia: 'none + CORS', evalFile: 'tests/v2/eval-modular-cors.test.js' },
   { profile: modularPgKyselyProfile, arquitetura: 'modular', persistencia: 'PostgreSQL + Kysely', evalFile: 'tests/v2/eval-modular-pg.test.js' },
   { profile: modularPgSequelizeProfile, arquitetura: 'modular', persistencia: 'PostgreSQL + Sequelize', evalFile: 'tests/v2/eval-modular-pg-sequelize.test.js' },
   { profile: mvcProfile, arquitetura: 'MVC', persistencia: 'none', evalFile: 'tests/v2/eval-mvc.test.js' },

@@ -48,7 +48,7 @@ export type TraitDefinition = {
  */
 export type Capability = {
   id: string;
-  kind: 'persistence' | 'infra';
+  kind: 'persistence' | 'infra' | 'platform';
   dependencies?: Partial<DependencyManifest>;
   /** Arquivos que só essa capability conhece (database.ts, repositório, migrations, seed...). */
   files?: FileManifest[];

@@ -291,7 +291,68 @@ tamanho dos outros itens desta fase — fica registrado aqui como dívida conhec
 Verificado com `npm test` completo: **15 testes, 0 falhas** (igual à Fase 3), incluindo as novas
 asserções de contrato nos 6 profiles.
 
-## 12. Ambiente de teste verificado nesta sessão
+## 12. Fase 5 do roadmap — expandir o catálogo selecionável
+
+Escopo desta rodada, decidido com o usuário antes de começar: o roadmap original juntava cinco
+frentes bem diferentes nesta fase (persistência nova — Prisma/Drizzle/MySQL/MongoDB —, plugins de
+plataforma, auth JWT, Redis, observabilidade), cada uma exigindo o contrato completo do
+`AGENTS.md` (`input de CLI → validação → capabilities → dependências → árvore de arquivos →
+comportamento de runtime → documentação/exemplo → eval`). Em vez de abrir várias ao mesmo tempo,
+esta rodada entrega **uma única capability nova, de ponta a ponta** — prova de que o modelo de
+`Capability` desenhado na Fase 3 (pensado para persistência) se estende a um tipo diferente de
+capability sem custo extra na engine, que era exatamente o critério de saída que a Fase 3 tinha
+deixado em aberto.
+
+**Capability escolhida: `@fastify/cors`, como `kind: 'platform'`.** Critério de escolha: zero
+serviço de infra (sem `docker-compose.yml`, sem variável de ambiente própria) e zero acoplamento
+com persistência — isso isola a prova no que ela precisa provar (o mecanismo de composição), sem
+reabrir a complexidade de repositório/serviço que uma capability de banco (Redis, por exemplo)
+traria numa arquitetura hoje pensada só para "banco ou nenhum".
+
+**O que mudou:**
+
+- **`Capability.kind` ganhou um terceiro valor**, `'platform'`, em `core/types.d.ts` (antes só
+  `'persistence' | 'infra'`).
+- **`templates/modular/index.js`**: `appContent` (string fixa) virou `buildAppTsContent(fragment =
+  {})` — mesma ideia de `architectures/modular-persisted.js::buildAppTsContent`, mas para a
+  variante sem persistência. Chamada sem argumento (perfil `modular` original) gera exatamente o
+  mesmo `app.ts` de antes — verificado gerando os dois (antes/depois do refactor) e rodando `diff
+  -r`: única diferença foi um espaço em branco no fim de uma linha, mesmo tipo de diferença
+  cosmética já aceita na verificação da Fase 3.
+- **`capabilities/cors.js`** (novo): a capability em si — só `dependencies.runtime:
+  ['@fastify/cors']` e um `appFragment` com o import e `await app.register(cors)`. Sem arquivos,
+  sem scripts, sem `composeServices`.
+- **`profiles/modular-cors.js`** (novo): perfil montado à mão (não via `compose.js`) — reaproveita
+  os mesmos arquivos do perfil `modular` (rotas, schemas, handler, service in-memory, inalterados)
+  e monta o `app.ts` chamando `buildAppTsContent(corsCapability.appFragment)`. Não usei
+  `composeProfile` porque ele foi desenhado para a família "modular + persistência", onde a
+  capability é dona de todo `testFiles` (o banco substitui as rotas inteiras); aqui a capability só
+  *acrescenta* um teste aos que o `modular` já tem, e mesclar as duas listas à mão é mais simples e
+  mais honesto do que generalizar `compose.js` para um caso sem um segundo exemplo real ainda.
+- **CLI**: novo profile `modular-cors` no menu rápido do wizard (`bin/cli.js`) e na lista
+  `v2Profiles`; selecionável via `--profile modular-cors`.
+- **`scripts/generate-support-matrix.js`**: nova linha na matriz.
+- **Eval novo** (`tests/v2/eval-modular-cors.test.js`), no mesmo formato dos outros evals de
+  profile (gerar → `npm install` → lint → build → `npm test`), mais uma checagem com servidor real
+  de pé: `npm run dev`, requisição HTTP de verdade com header `Origin`, e confirmação de que
+  `/health` responde com `access-control-allow-origin` (config padrão do `@fastify/cors`, sem
+  allowlist, por isso `*` — não o eco do Origin, que exigiria `{ origin: true }` explícito).
+- Suíte gerada ganhou `tests/cors.test.ts` (preflight `OPTIONS` + header em requisição normal),
+  nas duas sintaxes (`node:test` e Vitest).
+
+**Deliberadamente fora desta rodada** (fica no roadmap para uma rodada futura de Fase 5, não
+escondido): as outras quatro frentes do roadmap original — persistência nova (Prisma/Drizzle/
+MySQL/MongoDB), Redis como capability de infra (que exigiria a lógica de merge de
+`composeServices` — hoje ainda só existe uma capability de infra por profile, a mesma limitação
+que a Fase 3 já tinha documentado como dívida — já que Redis teria `docker-compose.yml` próprio
+para combinar com o do Postgres), auth JWT, e observabilidade (log correlacionado + `/metrics`).
+Cada uma delas ainda precisa do contrato completo do `AGENTS.md`, não só de uma capability.
+
+Verificado com `npm test` completo: **16 testes, 0 falhas** (15 da Fase 4 + o novo eval de
+`modular-cors`), mais `npm run docs:support-matrix:check` e `npm run test:unit` (59 testes, V1
+inalterada) isoladamente.
+
+## 13. Ambiente de teste verificado nesta sessão
 
 Estado anterior (referência histórica):
 ```

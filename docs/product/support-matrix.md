@@ -8,6 +8,7 @@
 |---|---|---|---|---|
 | `minimal` | minimal | none | suportado | `eval-minimal.test.js` |
 | `modular` | modular | none | suportado | `eval-modular.test.js` |
+| `modular-cors` | modular | none + CORS | suportado | `eval-modular-cors.test.js` |
 | `modular-postgres-kysely` | modular | PostgreSQL + Kysely | suportado | `eval-modular-pg.test.js` |
 | `modular-postgres-sequelize` | modular | PostgreSQL + Sequelize | suportado | `eval-modular-pg-sequelize.test.js` |
 | `mvc` | MVC | none | suportado | `eval-mvc.test.js` |
