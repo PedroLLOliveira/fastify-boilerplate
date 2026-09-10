@@ -40,18 +40,24 @@ function startDev(cwd) {
   return { proc, getOutput: () => output };
 }
 
-function stopDev(proc) {
+// Retorna se o processo fechou sozinho depois do SIGTERM (graceful) ou
+// precisou do SIGKILL de força depois do timeout — usado tanto pra cleanup
+// quanto pra afirmar de verdade que o shutdown gracioso (achado 10)
+// funciona, não só "eventualmente morre".
+function stopDev(proc, { assertGraceful = false } = {}) {
   return new Promise((resolve) => {
-    if (!proc || proc.exitCode !== null) return resolve();
+    if (!proc || proc.exitCode !== null) return resolve(true);
+    let killedForcefully = false;
     const forceKill = setTimeout(() => {
+      killedForcefully = true;
       try { process.kill(-proc.pid, 'SIGKILL'); } catch { /* já morreu */ }
-    }, 5000);
-    proc.once('close', () => { clearTimeout(forceKill); resolve(); });
+    }, assertGraceful ? 10000 : 5000);
+    proc.once('close', () => { clearTimeout(forceKill); resolve(!killedForcefully); });
     try {
       process.kill(-proc.pid, 'SIGTERM');
     } catch {
       clearTimeout(forceKill);
-      resolve();
+      resolve(true);
     }
   });
 }
@@ -91,6 +97,17 @@ for (const { id, needsDocker } of PROFILES) {
       console.log(`[FIRST-CMD:${id}] Gerando projeto em`, tmpDir);
       await runCommand('node', [CLI_PATH, '--profile', id, '--projectName', projectName], tmpDir);
 
+      // Contrato: README e .env.example coerentes com o que foi gerado —
+      // todo script real do package.json precisa estar documentado.
+      const pkg = JSON.parse(await fs.readFile(path.join(projectPath, 'package.json'), 'utf8'));
+      const readme = await fs.readFile(path.join(projectPath, 'README.md'), 'utf8');
+      for (const scriptName of Object.keys(pkg.scripts)) {
+        assert.ok(
+          readme.includes(`npm run ${scriptName}`),
+          `README.md deveria documentar "npm run ${scriptName}" (existe em package.json)`
+        );
+      }
+
       console.log(`[FIRST-CMD:${id}] npm install...`);
       await runCommand('npm', ['install'], projectPath);
 
@@ -110,7 +127,27 @@ for (const { id, needsDocker } of PROFILES) {
         assert.strictEqual(usersRes.status, 200);
         const usersBody = await usersRes.json();
         assert.ok(usersBody.data.length >= 1, 'o seed do predev deveria garantir pelo menos um usuário no primeiro GET');
+
+        // Contrato: GET /health não depende de serviço externo (achado 11).
+        // Derruba o Postgres com o app já de pé e confirma que /health
+        // continua 200 (só /ready, que existe pra isso, deve degradar).
+        console.log(`[FIRST-CMD:${id}] Derrubando Postgres pra confirmar independência do /health...`);
+        await runCommand('docker', ['compose', 'stop', 'postgres'], projectPath);
+        await new Promise((r) => setTimeout(r, 1000));
+
+        const healthAfterDbDown = await fetch('http://localhost:3000/health');
+        assert.strictEqual(healthAfterDbDown.status, 200, '/health deveria continuar 200 com o Postgres fora do ar');
+
+        const readyAfterDbDown = await fetch('http://localhost:3000/ready');
+        assert.strictEqual(readyAfterDbDown.status, 503, '/ready deveria refletir o banco fora do ar');
       }
+
+      // Contrato: shutdown controlado (achado 10) — SIGTERM precisa fechar
+      // o processo sozinho, sem precisar do SIGKILL de força do teardown.
+      console.log(`[FIRST-CMD:${id}] Confirmando shutdown gracioso (SIGTERM)...`);
+      const exitedGracefully = await stopDev(dev.proc, { assertGraceful: true });
+      dev = undefined; // já finalizado, não repetir no finally
+      assert.ok(exitedGracefully, 'o processo deveria encerrar sozinho após SIGTERM, sem precisar de SIGKILL');
 
       console.log(`[FIRST-CMD:${id}] "npm install && npm run dev" honrou a promessa.`);
     } finally {

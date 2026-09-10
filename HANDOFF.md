@@ -235,7 +235,63 @@ pedia ("matriz combinatória inteira compila em CI") depende de expandir o catá
 combinações, que é trabalho da Fase 5 (ou de uma rodada futura desta Fase 3, se o usuário decidir
 retomar o escopo "tudo").
 
-## 11. Ambiente de teste verificado nesta sessão
+## 11. Fase 4 do roadmap — ambiente e contrato da app
+
+Escopo desta rodada, decidido com o usuário antes de começar: **só os consertos de contrato nos 6
+profiles já existentes** (achados 09–13). As duas capabilities novas que o roadmap original também
+listava nesta fase — Dockerfile multi-stage/`.dockerignore` e devcontainer — ficaram de fora por
+serem "catálogo novo", não "conserto de promessa quebrada"; podem entrar numa rodada futura.
+
+**O que mudou:**
+
+- **README gerado por profile (parte do achado 09).** `core/readme.js` monta o `README.md` a
+  partir dos **scripts e arquivos finais** já resolvidos (depois de traits e capability
+  aplicados) — não é texto fixo por profile. Detecta `/ready` e `/users` pela presença real do
+  arquivo (`health.route`/`users.route`), não por `persistence !== 'none'`: `modular` tem os dois
+  mesmo sem persistência (CRUD em memória), e isso quase virou um bug no README também.
+- **Graceful shutdown (achado 10).** `serverContent` (compartilhado por minimal/modular/mvc, e a
+  versão própria do `clean`) ganhou handlers de `SIGTERM`/`SIGINT` que chamam `app.close()` antes
+  de `process.exit()`. Como o Fastify já dispara os hooks `onClose` de todo plugin registrado,
+  isso também fecha a conexão com o banco nos profiles Postgres — não precisou de nada adicional
+  no lado do Sequelize (o plugin já registrava `onClose` corretamente).
+- **Achado 13 (dois pools no Kysely) resolvido.** O plugin `db-pool.ts` abria seu próprio
+  `pg.Pool` e decorava `fastify.dbPool`, que nenhum repositório usava — todo mundo importa o
+  singleton `db` de `database.ts`, que tem seu próprio pool via `PostgresDialect`. Renomeado para
+  `db-lifecycle.ts`: agora só referencia o singleton `db`, testa a conexão no boot
+  (`sql\`SELECT 1\`.execute(db)`, mesma ideia do `sequelize.authenticate()`) e registra
+  `db.destroy()` no `onClose`. Como bônus, `app.ts` não precisa mais de `loadEnv()`/`const env`
+  só para passar a connection string pro plugin — o singleton já resolve isso sozinho.
+- **Bug real encontrado testando o shutdown, não estava na lista de achados**: o `pg.Pool` do
+  Kysely não tinha listener de `'error'`. Quando o Postgres cai com uma conexão ociosa no pool
+  (testado derrubando o container com `docker compose stop postgres` com o app de pé), o Node
+  tratava isso como um evento `'error'` não capturado e **derrubava o processo inteiro** — via de
+  regra o tipo de bug que só aparece em produção, num restart de banco. Corrigido com
+  `pool.on('error', ...)` em `database.ts`. Confirmado que o Sequelize não tinha esse problema
+  (o pool interno dele já segura esse erro).
+- **Achado 11 (`/health` independente de serviço externo) verificado de verdade**, não só lido no
+  código: com o app de pé, `docker compose stop postgres`, `/health` continua 200, `/ready`
+  degrada pra 503. Isso já era estruturalmente verdade antes desta fase (o handler de `/health`
+  nunca faz I/O), mas ficava invisível sem o pool não travar o processo inteiro no meio do
+  caminho — os dois achados (11 e 13) estavam mais entrelaçados do que a lista sugeria.
+- **Eval estendido, não duplicado**: em vez de um eval novo só pra "contrato", o
+  `eval-first-command.test.js` da Fase 1 ganhou as asserções desta fase (é literalmente o cenário
+  onde elas importam): checagem README ↔ `package.json` (todo script real documentado),
+  `docker compose stop postgres` + `/health` ainda 200 (profiles Postgres), e confirmação de que o
+  processo morre sozinho com SIGTERM dentro de 10s (sem cair no SIGKILL de força do teardown) —
+  para os 6 profiles.
+
+**Deliberadamente fora desta rodada:** `.env` por ambiente (dev/test/ci) com o eval usando um
+banco isolado. Investigando a implementação, virou uma feature de verdade — precisaria de um
+segundo banco Postgres criado via init script do compose, uma `TEST_DATABASE_URL` distinta, e um
+hook `pretest` migrando esse segundo banco antes da suíte rodar (hoje `npm test` e `npm run dev`
+apontam pro mesmo `fastify_dev`, então rodar os dois ao mesmo tempo localmente faria os testes
+apagarem dado de dev via `TRUNCATE`/`DELETE`). Não é um "conserto de promessa quebrada" do
+tamanho dos outros itens desta fase — fica registrado aqui como dívida conhecida, não escondido.
+
+Verificado com `npm test` completo: **15 testes, 0 falhas** (igual à Fase 3), incluindo as novas
+asserções de contrato nos 6 profiles.
+
+## 12. Ambiente de teste verificado nesta sessão
 
 Estado anterior (referência histórica):
 ```
