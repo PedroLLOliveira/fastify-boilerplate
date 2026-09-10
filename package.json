@@ -1,7 +1,6 @@
 {
   "name": "fastify-boilerplate",
-  "version": "2.0.0",
-  "main": "index.js",
+  "version": "2.1.0",
   "bin": {
     "create-fastify-boilerplate": "bin/cli.js"
   },
@@ -38,12 +37,8 @@
   "homepage": "https://github.com/PedroLLOliveira/fastify-boilerplate#readme",
   "description": "",
   "dependencies": {
-    "chalk": "^5.4.1",
     "commander": "^13.1.0",
-    "ejs": "^3.1.10",
-    "fs-extra": "^11.3.0",
     "kolorist": "^1.8.0",
-    "inquirer": "^12.5.2",
-    "path": "^0.12.7"
+    "inquirer": "^12.5.2"
   }
 }

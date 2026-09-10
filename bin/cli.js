@@ -10,25 +10,38 @@ import { Command } from 'commander';
 
 import { renderProfile } from '../lib/v2/core/engine.js';
 
-const PKG = 'create-fastify-team';
+const PKG = 'fastify-boilerplate';
+
+// Registro declarativo dos profiles V2: id -> loader. Substitui a cadeia de
+// if/else que existia antes (achado 19 do roadmap) — a lista de profiles
+// válidos (`v2Profiles`) passa a ser derivada daqui, então não existe mais
+// como um profile estar nessa lista sem um loader correspondente, ou vice-versa.
+const PROFILE_LOADERS = {
+  minimal: async () => (await import('../lib/v2/profiles/minimal.js')).minimalProfile,
+  modular: async () => (await import('../lib/v2/profiles/modular.js')).modularProfile,
+  'modular-cors': async () => (await import('../lib/v2/profiles/modular-cors.js')).modularCorsProfile,
+  'modular-postgres-kysely': async () => (await import('../lib/v2/profiles/modular-pg-kysely.js')).modularPgKyselyProfile,
+  'modular-postgres-sequelize': async () => (await import('../lib/v2/profiles/modular-postgres-sequelize.js')).modularPgSequelizeProfile,
+  mvc: async () => (await import('../lib/v2/profiles/mvc.js')).mvcProfile,
+  clean: async () => (await import('../lib/v2/profiles/clean.js')).cleanProfile
+};
+const v2Profiles = Object.keys(PROFILE_LOADERS);
 
 async function main() {
-  console.log(blue(`\n${PKG} — Gerador de projetos Fastify para times (V2)\n`));
+  console.log(blue(`\n${PKG} — Gerador de projetos Fastify (V2)\n`));
 
   const program = new Command();
   program
     .option('--profile <type>', 'Nome do profile determinístico (ex: modular-postgres-kysely)')
     .option('--traits <list>', 'Traits separados por vírgula (ex: eslint-basic,vitest)')
     .option('--projectName <name>', 'Nome do projeto destino')
-    .option('--packageManager <pm>', 'Gerenciador de pacotes', 'npm')
     .option('--install', 'Roda a instalação de dependências automaticamente após gerar o projeto')
-    .option('--git', 'Inicializa um repositório git e cria o commit inicial');
+    .option('--git', 'Inicializa um repositório git e cria o commit inicial')
+    .option('--force', 'Gera mesmo se o diretório destino já existir e não estiver vazio');
 
   program.parse(process.argv);
   const options = program.opts();
 
-  const v2Profiles = ['minimal', 'modular', 'modular-cors', 'modular-postgres-kysely', 'modular-postgres-sequelize', 'mvc', 'clean'];
-  
   let selectedProfile = options.profile;
   let pName = options.projectName;
   let selectedTraits = options.traits ? options.traits.split(',') : [];
@@ -165,32 +178,23 @@ async function main() {
   }
 
   const root = path.resolve(process.cwd(), pName);
-  console.log(blue(`\n> Iniciando motor V2... Resolvendo dependências para: ${selectedProfile}`));
-  
 
-  let targetProfile;
-  if (selectedProfile === 'minimal') {
-    const { minimalProfile } = await import('../lib/v2/profiles/minimal.js');
-    targetProfile = minimalProfile;
-  } else if (selectedProfile === 'modular') {
-    const { modularProfile } = await import('../lib/v2/profiles/modular.js');
-    targetProfile = modularProfile;
-  } else if (selectedProfile === 'modular-cors') {
-    const { modularCorsProfile } = await import('../lib/v2/profiles/modular-cors.js');
-    targetProfile = modularCorsProfile;
-  } else if (selectedProfile === 'mvc') {
-    const { mvcProfile } = await import('../lib/v2/profiles/mvc.js');
-    targetProfile = mvcProfile;
-  } else if (selectedProfile === 'clean') {
-    const { cleanProfile } = await import('../lib/v2/profiles/clean.js');
-    targetProfile = cleanProfile;
-  } else if (selectedProfile === 'modular-postgres-kysely') {
-    const { modularPgKyselyProfile } = await import('../lib/v2/profiles/modular-pg-kysely.js');
-    targetProfile = modularPgKyselyProfile;
-  } else if (selectedProfile === 'modular-postgres-sequelize') {
-    const { modularPgSequelizeProfile } = await import('../lib/v2/profiles/modular-postgres-sequelize.js');
-    targetProfile = modularPgSequelizeProfile;
+  // Gerar por cima de um diretório não vazio misturava profiles em silêncio
+  // (achado 15) — sem aviso nenhum, duas árvores de arquivo coexistiam.
+  if (fs.existsSync(root)) {
+    const entries = await fsp.readdir(root);
+    if (entries.length > 0 && !options.force) {
+      console.error(
+        red(`\nErro: o diretório "${pName}" já existe e não está vazio.`) +
+        '\nUse --force se a intenção é mesmo gerar por cima (arquivos podem ser sobrescritos ou misturados).'
+      );
+      process.exit(1);
+    }
   }
+
+  console.log(blue(`\n> Iniciando motor V2... Resolvendo dependências para: ${selectedProfile}`));
+
+  const targetProfile = await PROFILE_LOADERS[selectedProfile]();
 
   // Resolver traits (merging explicit traits with profile default traits)
   const finalTraits = new Set(targetProfile.defaultTraits || []);
@@ -247,8 +251,8 @@ async function main() {
   console.log('\n' + green('✅ Projeto criado em: ') + cyan(root));
 
   if (options.install) {
-    console.log(blue(`\n> Instalando dependências (${options.packageManager} install)...`));
-    const result = spawnSync(options.packageManager, ['install'], { cwd: root, stdio: 'inherit', shell: true });
+    console.log(blue('\n> Instalando dependências (npm install)...'));
+    const result = spawnSync('npm', ['install'], { cwd: root, stdio: 'inherit', shell: true });
     if (result.status !== 0) {
       console.error(red('\nErro: falha ao instalar dependências. Rode manualmente dentro do projeto.'));
       process.exit(1);
@@ -267,9 +271,9 @@ async function main() {
   console.log('\nPróximos passos:');
   console.log(blue(`  cd ${pName}`));
   if (!options.install) {
-    console.log(blue(`  ${options.packageManager} install`));
+    console.log(blue('  npm install'));
   }
-  console.log(blue(`  ${options.packageManager} run dev\n`));
+  console.log(blue('  npm run dev\n'));
   if (selectedProfile.includes('postgres')) {
     console.log(cyan('> npm run dev sobe o Postgres via Docker Compose, roda as migrations e o seed de exemplo antes do servidor — é literalmente o único comando.'));
     console.log(cyan('> Já tem um Postgres seu? Use "npm run dev:no-infra" para pular o Docker Compose.\n'));
