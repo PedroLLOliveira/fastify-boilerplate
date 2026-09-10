@@ -10,7 +10,7 @@
 | F-FASTIFY-VALIDATION | [Fastify Validation and Serialization](https://fastify.dev/docs/latest/Reference/Validation-and-Serialization/) | JSON Schema, validação de request e serialização de resposta |
 | F-FASTIFY-TESTING | [Fastify Testing](https://fastify.dev/docs/latest/Guides/Testing/) | `app.inject()` e padrões de teste de aplicação Fastify |
 | F-NODE-RELEASES | [Node.js Releases](https://nodejs.org/en/about/previous-releases) | política de usar versões LTS/maintenance LTS em produção |
-| F-REPO-V1 | [fastify-boilerplate atual](https://github.com/PedroLLOliveira/fastify-boilerplate) | baseline, migração e rastreabilidade de decisões |
+| F-REPO-HISTORY | [fastify-boilerplate](https://github.com/PedroLLOliveira/fastify-boilerplate) | baseline, histórico de migração (v1 removida em v2.1.0, ver ADR-004) e rastreabilidade de decisões |
 
 ## Regra de atualização
 

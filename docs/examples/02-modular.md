@@ -1,5 +1,11 @@
 # Exemplo — Modular
 
+> **Nomes reais**: o profile `modular` gera `users.route.ts`/`users.handler.ts` (singular, não
+> `users.routes.ts`/`users.handlers.ts`) e um `users.service.ts` em memória, sem
+> `users.repository.ts` — a camada de repositório só existe nos profiles com persistência real
+> (`modular-postgres-kysely`/`-sequelize`, via `lib/v2/capabilities/`). A estrutura geral e as
+> regras de fronteira abaixo continuam valendo para os três.
+
 ## Quando usar
 
 Este é o profile padrão para novas APIs. Ele organiza por capacidade de negócio e preserva o modelo de plugins do Fastify.

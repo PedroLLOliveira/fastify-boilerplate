@@ -1,5 +1,10 @@
 # Exemplo — Clean Architecture
 
+> **Estado real vs. este documento**: o profile `clean` gerado hoje só tem `/health` (ver nota em
+> `docs/architecture/clean.md`), com pastas `core/useCases/` e `infrastructure/web/...` — não a
+> estrutura `domain/`/`application/`/`infra/`/`main/` abaixo. O CRUD de `users` é design-alvo para
+> quando o profile ganhar uma capability de persistência — ainda não existe.
+
 ## Quando usar
 
 Para domínios com invariantes relevantes, múltiplos adapters e necessidade real de substituir infraestrutura. Não use só para multiplicar camadas.

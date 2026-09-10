@@ -1,5 +1,13 @@
 # V2 Architecture: MVC (Model-View-Controller)
 
+> **Estado real vs. este documento**: o profile `mvc` publicado hoje (`status: supported`,
+> `persistence: 'none'`) só tem a rota de exemplo `/health` — `config/`, `routes/`, `schemas/`,
+> `controllers/`, `services/` (sem `middlewares/` nem `models/`). Não existe persistência nem CRUD
+> de `users` neste profile ainda; o wizard avisa isso quando Postgres é escolhido junto com MVC. O
+> restante deste documento descreve o design-alvo para quando uma capability de persistência for
+> composta com esta arquitetura (ver `docs/architecture/target-architecture.md`) — trate como
+> intenção de design, não como o que `lib/v2/profiles/mvc.js` gera hoje.
+
 O perfil **MVC** adapta o tradicional padrão Model-View-Controller para o contexto de REST APIs modernas com Fastify, separando horizontalmente as responsabilidades técnicas (diferente da arquitetura Modular que separa por domínio de negócio).
 
 No contexto de APIs, "View" é frequentemente substituída por respostas JSON ou serializadores, enquanto "Controller" é representado pelos handlers de rota.

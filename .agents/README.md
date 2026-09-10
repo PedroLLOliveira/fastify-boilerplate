@@ -15,4 +15,4 @@ As skills usam o formato aberto `SKILL.md`: uma pasta com metadados, instruçõe
 
 ## Workflows
 
-Use `feature-lifecycle.md` para evoluções normais e `brownfield-refactor.md` para reestruturação da v1 para v2.
+Use `feature-lifecycle.md` para evoluções normais. `brownfield-refactor.md` documenta o processo usado na migração v1 → v2 (concluída em `v2.1.0`, [ADR-004](../docs/adr/ADR-004-remocao-v1.md)) — mantido como referência de método para uma futura reestruturação equivalente, não como trabalho em aberto.

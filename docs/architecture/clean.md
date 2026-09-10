@@ -1,5 +1,14 @@
 # V2 Architecture: Clean Architecture
 
+> **Estado real vs. este documento**: o profile `clean` publicado hoje (`status: supported`,
+> `persistence: 'none'`) só tem a rota de exemplo `/health`, com `src/core/useCases/`,
+> `src/infrastructure/web/{fastify,routes,controllers}/` — sem `domain/`, sem
+> `infrastructure/{database,repositories}/`. Não existe persistência nem CRUD de `users` neste
+> profile ainda. O restante deste documento (estrutura com `domain/`/`repositories`, exemplo com
+> `PostgresUserRepository`) descreve o design-alvo para quando uma capability de persistência for
+> composta com esta arquitetura — trate como intenção de design, não como o que
+> `lib/v2/profiles/clean.js` gera hoje.
+
 O perfil **Clean Architecture** é focado no isolamento total do Domínio (Regras de Negócio Empresariais) de detalhes de infraestrutura (Banco de dados, Framework web, Bibliotecas de terceiros).
 
 ## Organização de Pastas
