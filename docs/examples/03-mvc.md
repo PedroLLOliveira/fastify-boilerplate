@@ -1,5 +1,9 @@
 # Exemplo — MVC
 
+> **Estado real vs. este documento**: o profile `mvc` gerado hoje só tem `/health` (ver nota em
+> `docs/architecture/mvc.md`). O CRUD de `users` com `repositories/`/`models/` abaixo é design-alvo
+> para quando o profile ganhar uma capability de persistência — ainda não existe.
+
 ## Quando usar
 
 Para equipes com convenção MVC estabelecida ou quando a clareza controller/service/model é mais importante que uma organização por módulo. Deve ser tratado como profile de compatibilidade, não como padrão sem avaliação de contexto.

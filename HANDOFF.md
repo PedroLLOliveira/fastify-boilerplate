@@ -1,8 +1,8 @@
 # Handoff — Estado atual do fastify-boilerplate
 
-> Documento gerado em 2026-09-09 para consolidar o estado real do projeto antes de uma proposta de refatoração. Todas as afirmações abaixo foram verificadas lendo o código em `main` (commit `ff8c355`), não apenas a documentação — onde código e docs divergem, isso está marcado explicitamente.
+> Documento gerado em 2026-09-09 para consolidar o estado real do projeto antes de uma proposta de refatoração (`main` em `ff8c355` na época), e mantido ao longo das sete fases do roadmap "Primeiro comando" que se seguiram. **Atualizado em 2026-09-10**: o roadmap está completo — `main` em `17ffc42`, `v2.1.0` publicado no npm (ver seção 14). As seções 8–14 documentam cada fase; onde código e docs divergiam em algum ponto, isso está marcado explicitamente no histórico abaixo em vez de reescrito.
 >
-> As specs `000` a `007`, que documentam a construção incremental da V2, foram movidas para `specs/_archive/` (histórico preservado, fora do caminho ativo). Este documento é o novo ponto de partida.
+> As specs `000` a `007`, que documentam a construção incremental da V2, foram movidas para `specs/_archive/` (histórico preservado, fora do caminho ativo). Este documento é o ponto de partida para entender o estado atual do repositório.
 
 ## 1. O que o projeto é
 
@@ -418,11 +418,58 @@ diretório vazio (ok), gerar em diretório não vazio sem `--force` (recusa com 
 gerar com `--force` por cima (permite), e `toPackageName` com nomes com espaço/maiúscula/pontuação.
 Nenhum container Docker órfão depois da suíte completa.
 
-**Deliberadamente fora desta rodada, por instrução explícita do usuário:** `npm publish`. O
-`package.json` está em `2.1.0`, mas nenhum `npm publish`, tag de git ou release do GitHub foi
-criado — a publicação em si é uma decisão do usuário, para quando ele decidir.
+**Atualização — publicado em sessão seguinte, por instrução explícita do usuário:** as sete PRs
+aninhadas (#20–#26) foram mergeadas em `main`, a tag `v2.1.0` foi criada, uma GitHub Release foi
+publicada e `npm publish` rodou — `fastify-boilerplate@2.1.0` está em produção no registry como
+`latest`. Detalhes na seção 14 abaixo.
 
-## 14. Ambiente de teste verificado nesta sessão
+## 14. Merge, tag, release e publish em npm (fechando o roadmap)
+
+Depois das sete PRs aninhadas abertas (achado organizacional desta sessão: nenhuma delas tinha CI
+verde de verdade ainda — os evals só tinham sido verificados localmente), o usuário pediu para
+mergear tudo em `main`, criar tag/release e publicar no npm. Dois bugs reais e um comportamento do
+GitHub não documentado na sessão anterior apareceram no caminho:
+
+- **CI nunca tinha passado de verdade.** `PR #20` (Fase 0, a que introduziu `.github/workflows/ci.yml`)
+  estava com CI vermelho havia 19h sem que ninguém notasse — os evals tinham só sido rodados
+  localmente. Duas causas, as duas por eu nunca ter verificado a execução real no GitHub antes:
+  1. `actions/setup-node@v4` com `cache: npm` + `npm ci` exigem um lockfile no checkout, mas
+     `package-lock.json` está no `.gitignore` deste repo — o job falhava no segundo passo, antes
+     de qualquer teste rodar. Fix: `npm install` sem cache de dependências.
+  2. Com o lockfile corrigido, o job do Node 20 passou mas o do Node 22 falhou especificamente no
+     `test:e2e`, com `Cannot find module '.../tests/v2'` — `node --test <diretório>` resolve de
+     forma diferente entre as duas versões do test runner. Fix: glob explícito
+     (`tests/v2/*.test.js`) em vez de apontar para o diretório bare; o shell expande antes do Node
+     decidir o que fazer com o argumento, então a diferença de versão deixa de importar.
+  3. As duas correções foram feitas na branch da Fase 0 (`roadmap/v2.1-primeiro-comando`) e
+     cascatearam limpo pelas branches seguintes, porque nenhuma delas jamais tocou
+     `.github/workflows/ci.yml` ou o script `test:e2e` depois da Fase 0 — um merge três-vias sem
+     conflito em cada uma.
+- **GitHub fecha PRs órfãs, não retargeta.** Ao mergear a PR #20 com `--delete-branch`, a PR #21
+  (base = `roadmap/v2.1-primeiro-comando`, a branch recém-apagada) foi **fechada automaticamente**
+  pelo GitHub — não retargetada para `main`, como eu esperava por analogia com outras ferramentas.
+  GitHub também recusa reabrir uma PR cuja base foi apagada (`"state cannot be changed. The ...
+  branch has been deleted."`). Recuperação: abri uma PR nova (#27) do mesmo branch
+  (`roadmap/fase-1-primeiro-comando`) direto para `main`, comentei em #21 apontando para ela, e
+  mudei de estratégia para o resto da pilha — retargetar cada PR ainda aberta para `main`
+  (`gh api -X PATCH .../pulls/N -f base=main`, já que `gh pr edit --base` retornava um erro de
+  GraphQL não relacionado, sobre depreciação do Projects Classic, sem aplicar a mudança) **antes**
+  de mergear, e só apagar as branches no final, depois que nenhuma PR mais dependia delas como
+  base.
+- **Verificação final**: depois do último merge (#26), a run de CI disparada pelo `push` em `main`
+  rodou verde nos dois Node (20 e 22) — essa é a primeira vez que o pipeline completo passou de
+  ponta a ponta no ambiente real do GitHub, não só localmente. `npm test` local na tip de `main`
+  também: 16/16.
+- **Tag `v2.1.0`, GitHub Release e `npm publish`**: nessa ordem, depois do merge e da verificação
+  acima. `npm publish --dry-run` primeiro (conferiu os 50 arquivos do tarball — nenhum resquício de
+  V1, nenhum `.env`, nenhum segredo) e só depois o publish real.
+
+Estado final: `main` em `17ffc42` (histórico linear das 7 fases + os 2 fixes de CI + a PR de
+recuperação #27), tag `v2.1.0`, [release no GitHub](https://github.com/PedroLLOliveira/fastify-boilerplate/releases/tag/v2.1.0),
+`fastify-boilerplate@2.1.0` publicado como `latest` no npm. Todas as branches de fase foram
+apagadas depois do merge.
+
+## 15. Ambiente de teste verificado nesta sessão
 
 Estado anterior (referência histórica):
 ```

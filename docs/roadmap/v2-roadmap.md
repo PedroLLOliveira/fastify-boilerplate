@@ -1,5 +1,14 @@
 # Roadmap de refatoração — Fastify Boilerplate v2
 
+> **Status: concluído.** Este foi o roadmap de fundação da v2 (specs `000`–`007`, hoje em
+> `specs/_archive/`). Todas as fases abaixo foram implementadas — os 4+ profiles existem, a v1
+> mencionada na Fase 0/7 foi removida por completo (não só deprecada) em `v2.1.0` via
+> [ADR-004](../adr/ADR-004-remocao-v1.md), e um segundo roadmap ("Primeiro comando", documentado em
+> `HANDOFF.md`, seções 8–14) fechou os gaps de contrato que este aqui não cobria (a promessa de
+> `npm install && npm run dev` funcionar de fato, CI real, engine componentizada em capabilities).
+> Mantido como histórico da decisão original; para o estado atual, use `HANDOFF.md` e
+> `docs/product/support-matrix.md`.
+
 ## Norte
 
 Criar uma biblioteca/CLI que gere projetos Fastify utilizáveis no primeiro comando, com profiles limitados, explícitos e cobertos de ponta a ponta.

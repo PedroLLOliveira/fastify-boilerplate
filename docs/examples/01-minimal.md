@@ -1,5 +1,10 @@
 # Exemplo — Minimal
 
+> **Estado real vs. este documento**: o profile `minimal` gerado hoje tem `routes/health.ts` e
+> `routes/hello.ts` — não a rota `POST /users` mostrada abaixo. O exemplo permanece útil como
+> referência de estilo (schema + handler num profile sem módulos), mas não é literalmente o que
+> `lib/v2/profiles/minimal.js` grava no disco.
+
 ## Quando usar
 
 Serviços pequenos, APIs internas simples e início de projeto quando ainda não há domínio suficiente para justificar módulos formais.

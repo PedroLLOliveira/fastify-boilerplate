@@ -1,46 +1,81 @@
 # Arquitetura-alvo da v2
 
-## Proposta de monorepo lógico
+> Este documento descrevia, antes da implementação, uma proposta de monorepo com `npm workspaces`.
+> A implementação real ficou mais simples — um único pacote (`lib/v2/`), sem workspaces — mas
+> preservou a separação de responsabilidades que era o ponto essencial da proposta. A seção
+> "Layout real" abaixo é a fonte de verdade; a proposta original fica só como registro da decisão.
+
+## Layout real (`lib/v2/`)
 
 ```text
-packages/
-  cli/                  # UX, argumentos, modo interativo e não interativo
-  core/                 # profile registry, capabilities, manifests e renderer
+lib/v2/
+  core/
+    catalog.js          # versões fixas de dependências (sem "latest")
+    engine.js            # renderProfile(profile, traits, outDir, projectName)
+    compose.js            # composeProfile({ architecture, capability, ... }) — arquitetura + capability
+    readme.js             # gera o README.md do projeto a partir dos arquivos/scripts finais
+    slug.js               # normaliza o projectName para um name de package.json válido
+    types.d.ts            # ProfileDefinition, TraitDefinition, Capability
+  architectures/
+    modular-persisted.js  # núcleo HTTP compartilhado entre capabilities de persistência do modular
+  capabilities/
+    postgres-kysely.js
+    postgres-sequelize.js
+    postgres-shared.js    # infra comum às duas (.env.example, docker-compose.yml, config/env.ts)
+    cors.js                # capability de plataforma (kind: 'platform'), sem infra nem env
   profiles/
-    minimal/
-    modular/
-    mvc/
-    clean/
-  persistence/
-    none/
-    postgres-kysely/
-    postgres-sequelize/
-  testkit/              # helpers para gerar, instalar e verificar projects
-examples/
-  minimal/
-  modular/
-  mvc/
-  clean/
-evals/
-  profiles/
-docs/
-specs/
+    minimal.js
+    modular.js
+    modular-cors.js
+    modular-pg-kysely.js
+    modular-postgres-sequelize.js
+    mvc.js
+    clean.js
+  templates/
+    minimal/index.js
+    modular/index.js
+    mvc/index.js
+    clean/index.js        # os profiles Postgres e o modular-cors não têm templates/ próprio
+  traits/
+    linter.js              # ESLint básico/Prettier
+    precommit.js            # Husky + lint-staged
+    testing.js               # node:test nativo / Vitest
 ```
 
-O layout pode ser implementado em `npm workspaces` ou outro workspace aprovado por ADR. O ponto essencial não é a ferramenta, mas a separação: CLI não decide template; templates não escondem dependências; profile não faz I/O direto; eval não replica manualmente as regras do core.
+`bin/cli.js` resolve o profile por um registro declarativo (`PROFILE_LOADERS: Record<id, () =>
+Promise<ProfileDefinition>>`) — não por uma cadeia de `if/else`. CLI não decide conteúdo de
+template; templates não escondem dependências; profile não faz I/O direto; eval não replica
+manualmente as regras do core.
 
-## Tipos conceituais
+## Tipos reais (ver `lib/v2/core/types.d.ts`)
 
 ```ts
-interface ProfileDefinition {
+type ProfileDefinition = {
   id: string;
   architecture: 'minimal' | 'modular' | 'mvc' | 'clean';
   persistence: 'none' | 'postgres-kysely' | 'postgres-sequelize';
   status: 'experimental' | 'supported' | 'deprecated';
   dependencies: DependencyManifest;
   files: FileManifest[];
-  checks: EvalRequirement[];
-}
+  checks: string[];
+  defaultTraits?: string[];
+  scripts?: Record<string, string>;
+  testFiles?: Record<string, FileManifest[]>; // chave = id do trait de teste
+};
+
+// Uma capability é composta pela arquitetura via core/compose.js — introduzida
+// para eliminar a duplicação entre os dois profiles Postgres (~80% medido antes
+// do refactor), e estendida na Fase 5 para um terceiro `kind` (platform).
+type Capability = {
+  id: string;
+  kind: 'persistence' | 'infra' | 'platform';
+  dependencies?: Partial<DependencyManifest>;
+  files?: FileManifest[];
+  scripts?: Record<string, string>;
+  testFiles?: Record<string, FileManifest[]>;
+  composeServices?: Record<string, unknown>; // declarado; merge de 2+ capabilities de infra no mesmo profile ainda não implementado
+  appFragment?: { imports?: string[]; needsEnv?: boolean; registration?: string };
+};
 ```
 
 ## Pipeline de geração

@@ -1,5 +1,10 @@
 # Workflow: refatoração brownfield v1 → v2
 
+> **Status: concluído.** A v1 (`lib/scaffold/`, `lib/templates/{js,common,ts}`, `lib/examples/`) foi
+> removida por completo em `v2.1.0` ([ADR-004](../../docs/adr/ADR-004-remocao-v1.md)), seguindo as
+> 7 fases abaixo. Mantido como referência de método para uma futura reestruturação equivalente —
+> não descreve mais trabalho pendente neste repositório.
+
 ## Propósito
 
 Preservar o que funciona enquanto a arquitetura interna muda. A v2 só substitui uma superfície da v1 quando o contrato equivalente estiver validado.
