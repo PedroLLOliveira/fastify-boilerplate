@@ -3,6 +3,7 @@
 import fs from 'fs';
 import fsp from 'fs/promises';
 import path from 'path';
+import { spawnSync } from 'child_process';
 import inquirer from 'inquirer';
 import { blue, green, yellow, red, cyan } from 'kolorist';
 import { Command } from 'commander';
@@ -19,7 +20,9 @@ async function main() {
     .option('--profile <type>', 'Nome do profile determinístico (ex: modular-postgres-kysely)')
     .option('--traits <list>', 'Traits separados por vírgula (ex: eslint-basic,vitest)')
     .option('--projectName <name>', 'Nome do projeto destino')
-    .option('--packageManager <pm>', 'Gerenciador de pacotes', 'npm');
+    .option('--packageManager <pm>', 'Gerenciador de pacotes', 'npm')
+    .option('--install', 'Roda a instalação de dependências automaticamente após gerar o projeto')
+    .option('--git', 'Inicializa um repositório git e cria o commit inicial');
 
   program.parse(process.argv);
   const options = program.opts();
@@ -219,24 +222,37 @@ async function main() {
   }
 
   await renderProfile(targetProfile, loadedTraits, root, pName);
-  
+
   console.log('\n' + green('✅ Projeto criado em: ') + cyan(root));
-  console.log('\nPróximos passos:');
-  console.log(blue(`  cd ${pName}`));
-  console.log(blue(`  ${options.packageManager} install`));
-  
-  // Custom message instructions based on features
-  if (selectedProfile.includes('postgres')) {
-    console.log(blue('  cp .env.example .env'));
-    console.log(blue('  docker compose up -d'));
-    if (selectedProfile.includes('sequelize')) {
-      console.log(blue('  npx sequelize-cli db:migrate'));
-    } else if (selectedProfile.includes('kysely')) {
-      console.log(blue('  npm run db:migrate'));
+
+  if (options.install) {
+    console.log(blue(`\n> Instalando dependências (${options.packageManager} install)...`));
+    const result = spawnSync(options.packageManager, ['install'], { cwd: root, stdio: 'inherit', shell: true });
+    if (result.status !== 0) {
+      console.error(red('\nErro: falha ao instalar dependências. Rode manualmente dentro do projeto.'));
+      process.exit(1);
     }
   }
-  
+
+  if (options.git) {
+    console.log(blue('\n> Inicializando repositório git...'));
+    // Sem shell: true — argumentos com espaço (a mensagem de commit) não podem
+    // ser reconstituídos numa linha de comando de shell sem quoting explícito.
+    spawnSync('git', ['init'], { cwd: root, stdio: 'inherit' });
+    spawnSync('git', ['add', '-A'], { cwd: root, stdio: 'inherit' });
+    spawnSync('git', ['commit', '-m', 'chore: scaffold inicial via fastify-boilerplate'], { cwd: root, stdio: 'inherit' });
+  }
+
+  console.log('\nPróximos passos:');
+  console.log(blue(`  cd ${pName}`));
+  if (!options.install) {
+    console.log(blue(`  ${options.packageManager} install`));
+  }
   console.log(blue(`  ${options.packageManager} run dev\n`));
+  if (selectedProfile.includes('postgres')) {
+    console.log(cyan('> npm run dev sobe o Postgres via Docker Compose, roda as migrations e o seed de exemplo antes do servidor — é literalmente o único comando.'));
+    console.log(cyan('> Já tem um Postgres seu? Use "npm run dev:no-infra" para pular o Docker Compose.\n'));
+  }
   console.log(green('Boas builds! 🚀\n'));
 }
 

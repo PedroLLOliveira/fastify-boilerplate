@@ -5,7 +5,6 @@ import path from 'path';
 import os from 'os';
 import { spawn } from 'child_process';
 import { fileURLToPath } from 'url';
-import net from 'net';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -29,27 +28,6 @@ function runCommand(command, args, cwd) {
   });
 }
 
-function waitForPort(port, host = '127.0.0.1', timeout = 15000) {
-  return new Promise((resolve, reject) => {
-    const start = Date.now();
-    const interval = setInterval(() => {
-      const socket = new net.Socket();
-      socket.connect(port, host, () => {
-        socket.destroy();
-        clearInterval(interval);
-        resolve();
-      });
-      socket.on('error', () => {
-        socket.destroy();
-        if (Date.now() - start > timeout) {
-          clearInterval(interval);
-          reject(new Error(`Timeout waiting for port ${port}`));
-        }
-      });
-    }, 500);
-  });
-}
-
 test('V2 E2E Eval - Profile Modular PG Sequelize', async (t) => {
   const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'fastify-v2-eval-pg-seq-'));
   const projectName = 'modular-seq-e2e-app';
@@ -69,19 +47,14 @@ test('V2 E2E Eval - Profile Modular PG Sequelize', async (t) => {
     console.log('[E2E-SEQ] Installing dependencies...');
     await runCommand('npm', ['install'], projectPath);
 
-    // Create env file
-    await runCommand('cp', ['.env.example', '.env'], projectPath);
+    // .env já é gravado pelo engine ao lado do .env.example (Fase 1) —
+    // nenhuma cópia manual necessária aqui.
 
     console.log('[E2E-SEQ] Starting Postgres via Docker Compose...');
-    await runCommand('docker', ['compose', 'up', '-d'], projectPath);
-    
-    console.log('[E2E-SEQ] Waiting for Postgres port 5432...');
-    await waitForPort(5432);
-    // Give Postgres a moment to actually be ready to accept connections after port opens
-    await new Promise(r => setTimeout(r, 2000));
+    await runCommand('docker', ['compose', 'up', '-d', '--wait'], projectPath);
 
-    console.log('[E2E-SEQ] Running migrations via sequelize-cli...');
-    await runCommand('npx', ['sequelize-cli', 'db:migrate'], projectPath);
+    console.log('[E2E-SEQ] Running migrations (npm run db:migrate)...');
+    await runCommand('npm', ['run', 'db:migrate'], projectPath);
 
     console.log('[E2E-SEQ] Running lint...');
     await runCommand('npm', ['run', 'lint'], projectPath);
