@@ -13,9 +13,12 @@ Um **gerador de projetos Fastify** (`npx fastify-boilerplate`): CLI interativo o
 ### V2 (`lib/v2/`) — é o único motor que o CLI executa hoje
 - `core/catalog.js` — versões fixas de dependências (sem `latest`).
 - `core/engine.js` — `renderProfile(profile, traits, outDir, projectName)`: funde profile + traits, resolve `package.json`, escreve o manifesto de arquivos.
-- `core/types.d.ts` — contratos de tipos (`ProfileDefinition`, `TraitDefinition`).
-- `profiles/*.js` — `minimal`, `modular`, `modular-pg-kysely`, `modular-postgres-sequelize`, `mvc`, `clean`.
-- `templates/*/index.js` — conteúdo real dos arquivos gerados por profile.
+- `core/compose.js` — `composeProfile({ architecture, baseFiles, baseDependencies, capability, ... })`: monta um `ProfileDefinition` a partir de uma arquitetura-base + uma capability de persistência (ver seção 10, Fase 3).
+- `core/types.d.ts` — contratos de tipos (`ProfileDefinition`, `TraitDefinition`, `Capability`).
+- `profiles/*.js` — `minimal`, `modular`, `modular-pg-kysely`, `modular-postgres-sequelize`, `mvc`, `clean`. Os dois profiles Postgres são "receitas" curtas (`composeProfile(...)`) desde a Fase 3, não manifestos de arquivo por arquivo.
+- `templates/*/index.js` — conteúdo real dos arquivos gerados por profile (`minimal`, `modular`, `mvc`, `clean` — os dois profiles Postgres não têm mais `templates/` próprio).
+- `architectures/modular-persisted.js` — núcleo HTTP compartilhado entre capabilities de persistência da arquitetura modular (error handler, not-found handler, rotas/schema/handler de users, `buildAppTsContent(fragment)`).
+- `capabilities/*.js` — `postgres-kysely.js`, `postgres-sequelize.js` (persistência) e `postgres-shared.js` (infra comum às duas: `.env.example`, `docker-compose.yml`, `config/env.ts`).
 - `traits/*.js` — `linter.js` (ESLint básico/Prettier), `precommit.js` (Husky+lint-staged), `testing.js` (node:test nativo/Vitest) — sistema "à la carte" acoplável a qualquer profile.
 
 ### V1 (`lib/scaffold/`, `lib/templates/`) — código morto, não desligado
@@ -177,7 +180,62 @@ Verificado com `npm test` completo: **15 testes, 0 falhas, 0 skips** (antes: 1 s
 para `clean`) — a matriz dos 6 profiles × lint/build/test está toda verde, cumprindo o critério de
 saída da Fase 2.
 
-## 10. Ambiente de teste verificado nesta sessão
+## 10. Fase 3 do roadmap — componentização real da engine
+
+Escopo desta rodada, decidido explicitamente com o usuário antes de começar: **só o núcleo da
+arquitetura de capabilities + eliminar a duplicação real e medida** entre
+`modular-pg-kysely`/`-sequelize`. Ficou de fora, por decisão consciente (não por esquecimento):
+persistência para `mvc`/`clean` (o wizard continua avisando "ainda em desenvolvimento" para essas
+combinações), validação declarativa de compatibilidade, e o eval que geraria a matriz combinatória
+— nenhuma combinação nova foi criada, então não há matriz nova pra validar ainda.
+
+**O que mudou:**
+
+- **Tipo `Capability` introduzido** em `core/types.d.ts`: `{ id, kind, dependencies, files,
+  scripts, testFiles, composeServices, appFragment }`. `composeServices` está declarado mas ainda
+  não tem lógica de merge real — só existe uma capability de infra por profile hoje, então
+  escrever esse merge agora seria especular sem um segundo caso pra validar contra (fica pra
+  quando o catálogo crescer, Fase 5).
+- **`core/compose.js`**: `composeProfile({ architecture, baseFiles, baseDependencies, capability,
+  ... })` monta o `ProfileDefinition` final juntando a arquitetura-base com uma capability. Os
+  profiles `modular-pg-kysely.js` e `modular-postgres-sequelize.js` viraram receitas de ~30
+  linhas cada — antes eram um manifesto de ~35 entradas de arquivo apontando pra um template de
+  400+ linhas cada.
+- **Duplicação real eliminada.** Medição antes de tocar em nada:
+  `usersRouteContent`/`usersHandlerContent` eram byte-a-byte idênticos entre kysely, sequelize
+  **e** o modular puro; `usersSchemaContent`, `envFileContent`, `configEnvContent` e
+  `dockerComposeContent` eram idênticos entre kysely e sequelize; `appTsContent` diferia em só 2
+  linhas (import + registro do plugin de banco) nos ~60 do arquivo. Esse núcleo agora vive uma
+  vez só:
+  - `architectures/modular-persisted.js` — error handler, not-found handler, rotas/schema/handler
+    de users, e `buildAppTsContent(fragment)` (função, não string fixa: monta o app.ts a partir
+    do fragmento que a capability injeta — imports, se precisa de `loadEnv()`, e a linha de
+    registro do plugin).
+  - `capabilities/postgres-shared.js` — `.env.example`, `docker-compose.yml`, `config/env.ts`.
+    Deliberadamente **não** ficou em `architectures/`: são específicos de "que infra a
+    persistência precisa", não da arquitetura HTTP. Kysely e Sequelize compartilham porque as
+    duas sobem o mesmo Postgres — uma capability de MySQL não reusaria este módulo, traria o
+    próprio compose.
+  - `lib/v2/templates/modular-pg-kysely/` e `modular-pg-sequelize/` (951 linhas somadas, ~80%
+    duplicadas) foram **apagados por completo** — nada mais importa esses caminhos.
+- **Verificação de que o refactor preserva comportamento** (não só "parece certo"): gerei os
+  dois profiles antes de tocar em qualquer arquivo, guardei a árvore completa, refatorei, gerei
+  de novo e rodei `diff -r` recursivo. Única diferença: ordem de chaves em `package.json`
+  (`fastify-plugin`/`@types/pg` migraram de posição — o `Set` de dependências agora soma
+  arquitetura + capability nessa ordem) e espaços em branco no fim de linha em `app.ts`. Zero
+  diferença de comportamento. `npm test` completo depois do refactor: **15 testes, 0 falhas**
+  (igual à Fase 2) — incluindo os dois evals com Docker real e o Vitest (`--traits vitest`
+  testado manualmente de ponta a ponta nos dois profiles Postgres pós-refactor).
+
+**Critério de saída da Fase 3, avaliado no escopo entregue:** adicionar uma nova capability de
+persistência Postgres (ex.: Prisma) agora custa escrever um arquivo em `capabilities/`
+reaproveitando `postgres-shared.js` e o núcleo de `architectures/modular-persisted.js` — não mais
+um arquivo de 400+ linhas copiado de um dos dois existentes. O que o critério original também
+pedia ("matriz combinatória inteira compila em CI") depende de expandir o catálogo de
+combinações, que é trabalho da Fase 5 (ou de uma rodada futura desta Fase 3, se o usuário decidir
+retomar o escopo "tudo").
+
+## 11. Ambiente de teste verificado nesta sessão
 
 Estado anterior (referência histórica):
 ```
