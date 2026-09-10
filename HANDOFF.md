@@ -36,8 +36,8 @@ Um **gerador de projetos Fastify** (`npx fastify-boilerplate`): CLI interativo o
 | `modular` | `supported` | `eval-modular.test.js` — verde | Consistente. |
 | `modular-postgres-kysely` | `supported` | `eval-modular-pg.test.js` — verde | Consistente. |
 | `modular-postgres-sequelize` | `supported` | `eval-modular-pg-sequelize.test.js` — verde | Consistente. |
-| `mvc` | `experimental` (rebaixado nesta sessão) | **não existe** | Sem eval ainda — corrigir na Fase 2 (escrever eval e só então promover a `supported`). |
-| `clean` | `experimental` (rebaixado nesta sessão) | **não existe** | Idem `mvc`. Além disso o profile está quebrado (TS2307 — ver achado 03 do roadmap); não deve ser promovido antes da Fase 2. |
+| `mvc` | `supported` (promovido na Fase 2) | `eval-mvc.test.js` — verde | Ganhou eval próprio; consistente. |
+| `clean` | `supported` (promovido na Fase 2) | `eval-clean.test.js` — verde | TS2307 corrigido (achado 03) e eval próprio adicionado; consistente. |
 
 `mvc` e `clean` também só geram um endpoint `/health` (sem CRUD de exemplo, sem persistência) — escopo bem menor que os profiles modulares.
 
@@ -80,7 +80,7 @@ Um **gerador de projetos Fastify** (`npx fastify-boilerplate`): CLI interativo o
 1. Decidir o destino da V1 (`lib/scaffold/`, `lib/templates/`, seus 10 arquivos de teste): remover de vez ou formalizar remoção via spec/ADR, conforme a própria constituição exige (Art. II) — hoje é ambiguidade não resolvida. Deliberadamente adiado para a Fase 6 do roadmap: enquanto os evals do V2 estavam vermelhos, a V1 era a única rede de segurança do repo.
 2. ~~Corrigir `npm test` para incluir `tests/v2/**`, ou dividir scripts (`test:unit`, `test:e2e`).~~ **Resolvido** — ver seção 4.
 3. ~~Unificar a fonte de verdade de status por profile.~~ **Resolvido** — ver seção 3.
-4. ~~Resolver `mvc`/`clean`: rebaixar `status` para `experimental`.~~ **Resolvido** nesta sessão. Falta ainda escrever os evals E2E de `mvc`/`clean` e corrigir o `clean` quebrado (TS2307) antes de promovê-los de volta a `supported` — isso é a Fase 2 do roadmap, não a Fase 0.
+4. ~~Resolver `mvc`/`clean`: rebaixar `status` para `experimental`, escrever eval E2E e corrigir o `clean` quebrado (TS2307).~~ **Resolvido** — ver seção 10 (Fase 2).
 5. Atualizar `README.md` para remover a menção ao fluxo V1 legado, já inexistente. Ainda em aberto.
 6. Decidir o que fazer com os achados de `docs/migration/current-baseline-findings.md` (fechar como resolvidos-por-remoção da V1, ou mover para uma spec de remoção formal). Ainda em aberto — depende do item 1.
 
@@ -127,11 +127,57 @@ Verificado rodando de ponta a ponta (`npm test` completo, e manualmente com `cur
 `/health`, `/ready` e `/users` nos dois profiles Postgres) — sem falhas, sem containers/processos
 órfãos após teardown.
 
-**Em aberto, deliberadamente fora desta fase:** `mvc`/`clean` continuam `experimental` — este eval
-prova que o "primeiro comando" funciona para `mvc`, mas não substitui o eval completo
-(lint+build+test+contrato) que a Fase 2 exige para promovê-lo de volta a `supported`.
+**Em aberto ao final da Fase 1, resolvido na Fase 2 (seção 9 abaixo):** `mvc`/`clean` continuavam
+`experimental` — o eval desta fase provava que o "primeiro comando" funcionava para `mvc`, mas não
+substituía o eval completo (lint+build+test+contrato) nem cobria `clean`, que estava quebrado.
 
-## 9. Ambiente de teste verificado nesta sessão
+## 9. Fase 2 do roadmap — consertar o que está quebrado
+
+Implementada nesta sessão (achados 03, 04, 14, 16 do roadmap "Roadmap do primeiro comando"):
+
+- **`clean` corrigido (achado 03).** Dois bugs de import, não um: (1) `app.ts` vive em
+  `src/infrastructure/web/fastify/app.ts`, mas importava `healthRoutes` de
+  `'./infrastructure/web/routes/health.route.js'` — um caminho que só faria sentido se `app.ts`
+  estivesse em `src/`; corrigido para `'../routes/health.route.js'` (routes/ e fastify/ são irmãos
+  sob web/). (2) `server.ts` era herdado do `minimal` e importava `buildApp` de `'./app.js'`
+  (mesmo diretório), mas o `app.ts` do `clean` não está em `src/`; `clean` ganhou seu próprio
+  `serverContent` com o import correto (`'./infrastructure/web/fastify/app.js'`). `npm run build`
+  agora passa sem TS2307.
+- **Evals novos `tests/v2/eval-mvc.test.js` e `tests/v2/eval-clean.test.js`** (mesmo padrão dos
+  evals existentes: gerar → install → lint → build → test). Ambos verdes — `mvc` e `clean`
+  promovidos de volta a `status: 'supported'` em `lib/v2/profiles/*.js`, e
+  `docs/product/support-matrix.md` regenerado (`npm run docs:support-matrix`) refletindo isso.
+- **Achado 04 (Vitest quebrava a suíte) resolvido de verdade, não só contornado.** Causa raiz: os
+  arquivos `tests/*.test.ts` eram fixos por profile e sempre escritos em sintaxe `node:test`,
+  independente do trait de teste escolhido — trocar para Vitest trocava só o *runner*, não o
+  conteúdo dos testes. `ProfileDefinition` ganhou um campo `testFiles: Record<traitId,
+  FileManifest[]>`; a engine agora escolhe o conjunto certo (`node-native-test` ou `vitest`)
+  conforme o trait ativo, e escreve nenhum arquivo de teste se nenhum trait de teste estiver
+  ativo. Os 8 arquivos de teste dos 6 profiles ganharam uma versão Vitest irmã (subtestes
+  `t.test()` do node:test viraram `describe`/`test` com `beforeAll`/`afterAll` no Vitest).
+  Verificado de ponta a ponta com `--traits vitest` nos profiles `modular`,
+  `modular-postgres-kysely` e `modular-postgres-sequelize` (este último com Docker real): todos os
+  testes (incluindo os que dependem de ordem de execução, como o fluxo de CRUD de usuários)
+  passam.
+- **Achado 16 (Husky sem `+x`) resolvido.** `FileManifest` ganhou um campo opcional `mode`; a
+  engine aplica `fsp.chmod` depois de escrever o arquivo. O hook `.husky/pre-commit` agora nasce
+  `-rwxr-xr-x` (confirmado gerando um projeto com o trait `husky-lint-staged`).
+- **Achado 14 (logs de produção poluindo `npm test`) resolvido.** Os scripts `test` dos traits
+  `node-native-test` e `vitest` agora começam com `NODE_ENV=test` — antes `buildApp()` só desligava
+  o logger com `NODE_ENV !== 'test'`, mas nada definia essa variável no script gerado.
+- **"Nenhum" agora desliga o default da categoria (parte do achado sobre traits).** No wizard
+  customizado, escolher "Nenhum" para linter ou framework de testes empurrava `selectedTraits`
+  sem nada — mas o `Set` de traits finais começava com `profile.defaultTraits` (que sempre inclui
+  `eslint-basic` e `node-native-test`) e nada removia esses defaults. Agora "Nenhum" empurra um
+  sentinel (`disable:eslint` / `disable:test`) que a resolução de traits usa para de fato remover
+  o default da categoria antes de aplicar a escolha do usuário. Confirmado via `--traits
+  disable:eslint,disable:test`: `package.json` gerado sem `lint`/`test` e sem a pasta `tests/`.
+
+Verificado com `npm test` completo: **15 testes, 0 falhas, 0 skips** (antes: 1 skip documentado
+para `clean`) — a matriz dos 6 profiles × lint/build/test está toda verde, cumprindo o critério de
+saída da Fase 2.
+
+## 10. Ambiente de teste verificado nesta sessão
 
 Estado anterior (referência histórica):
 ```

@@ -143,9 +143,12 @@ async function main() {
         }
       }
 
-      if (customAnswers.linter !== 'none') selectedTraits.push(customAnswers.linter);
+      // "Nenhum" precisa desligar o default da categoria, não só deixar de
+      // adicionar trait nenhum — por isso um sentinel `disable:<categoria>`
+      // em vez de simplesmente omitir a escolha.
+      selectedTraits.push(customAnswers.linter !== 'none' ? customAnswers.linter : 'disable:eslint');
       if (customAnswers.precommit) selectedTraits.push('husky-lint-staged');
-      if (customAnswers.testFramework !== 'none') selectedTraits.push(customAnswers.testFramework);
+      selectedTraits.push(customAnswers.testFramework !== 'none' ? customAnswers.testFramework : 'disable:test');
 
     } else {
       selectedProfile = initAnswers.profileChoice;
@@ -189,7 +192,21 @@ async function main() {
   const finalTraits = new Set(targetProfile.defaultTraits || []);
   for (const t of selectedTraits) {
     if (t === 'none') continue;
-    
+
+    // "Nenhum" desliga o default inteiro da categoria, em vez de só não
+    // adicionar nada por cima (antes, escolher "Nenhum" no linter/testes
+    // deixava o default do profile — ex.: eslint-basic — vivo do mesmo jeito).
+    if (t === 'disable:eslint') {
+      finalTraits.delete('eslint-basic');
+      finalTraits.delete('eslint-prettier');
+      continue;
+    }
+    if (t === 'disable:test') {
+      finalTraits.delete('node-native-test');
+      finalTraits.delete('vitest');
+      continue;
+    }
+
     // Evitar conflitos substituindo traits da mesma categoria
     if (t.startsWith('eslint')) {
       finalTraits.delete('eslint-basic');
@@ -199,7 +216,7 @@ async function main() {
       finalTraits.delete('node-native-test');
       finalTraits.delete('vitest');
     }
-    
+
     finalTraits.add(t);
   }
 
