@@ -20,14 +20,19 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
-          cache: npm
 
-      - run: npm ci
+      # Sem cache de dependências e com "npm install" (não "npm ci"): o
+      # repositório mantém `package-lock.json` fora do controle de versão
+      # (ver .gitignore), então não há lockfile no checkout para nenhum dos
+      # dois mecanismos usarem. É essa divergência que derrubava o job antes
+      # dele chegar em qualquer teste — nunca tinha sido verificado rodando
+      # de verdade no GitHub, só localmente.
+      - run: npm install
 
       - name: support-matrix.md em dia com os profiles
         run: npm run docs:support-matrix:check
 
-      - name: Unit tests (motor V1 legado)
+      - name: Unit tests (tests/*.test.js)
         run: npm run test:unit
 
       - name: E2E evals (motor V2 — geração, install, typecheck, lint, test, runtime)
