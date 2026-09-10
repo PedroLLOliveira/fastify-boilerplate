@@ -18,9 +18,13 @@
     "generator"
   ],
   "scripts": {
-    "test": "node --test tests/*.test.js",
+    "test": "npm run test:unit && npm run test:e2e",
+    "test:unit": "node --test tests/*.test.js",
+    "test:e2e": "node --test --test-concurrency=1 tests/v2/*.test.js",
     "test:watch": "node --test --watch tests/*.test.js",
-    "test:coverage": "node --test --experimental-test-coverage tests/*.test.js"
+    "test:coverage": "node --test --experimental-test-coverage tests/*.test.js",
+    "docs:support-matrix": "node scripts/generate-support-matrix.js",
+    "docs:support-matrix:check": "node scripts/generate-support-matrix.js --check"
   },
   "repository": {
     "type": "git",
