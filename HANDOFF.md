@@ -15,16 +15,18 @@ Um **gerador de projetos Fastify** (`npx fastify-boilerplate`): CLI interativo o
 - `core/engine.js` — `renderProfile(profile, traits, outDir, projectName)`: funde profile + traits, resolve `package.json`, escreve o manifesto de arquivos.
 - `core/compose.js` — `composeProfile({ architecture, baseFiles, baseDependencies, capability, ... })`: monta um `ProfileDefinition` a partir de uma arquitetura-base + uma capability de persistência (ver seção 10, Fase 3).
 - `core/types.d.ts` — contratos de tipos (`ProfileDefinition`, `TraitDefinition`, `Capability`).
-- `profiles/*.js` — `minimal`, `modular`, `modular-pg-kysely`, `modular-postgres-sequelize`, `mvc`, `clean`. Os dois profiles Postgres são "receitas" curtas (`composeProfile(...)`) desde a Fase 3, não manifestos de arquivo por arquivo.
-- `templates/*/index.js` — conteúdo real dos arquivos gerados por profile (`minimal`, `modular`, `mvc`, `clean` — os dois profiles Postgres não têm mais `templates/` próprio).
+- `profiles/*.js` — `minimal`, `modular`, `modular-cors`, `modular-pg-kysely`, `modular-postgres-sequelize`, `mvc`, `clean`. Os dois profiles Postgres são "receitas" curtas (`composeProfile(...)`) desde a Fase 3, não manifestos de arquivo por arquivo; `modular-cors` (Fase 5) é montado à mão, reaproveitando os arquivos do `modular`.
+- `templates/*/index.js` — conteúdo real dos arquivos gerados por profile (`minimal`, `modular`, `mvc`, `clean` — os dois profiles Postgres e o `modular-cors` não têm `templates/` próprio; reaproveitam `modular`/`modular-persisted`).
 - `architectures/modular-persisted.js` — núcleo HTTP compartilhado entre capabilities de persistência da arquitetura modular (error handler, not-found handler, rotas/schema/handler de users, `buildAppTsContent(fragment)`).
-- `capabilities/*.js` — `postgres-kysely.js`, `postgres-sequelize.js` (persistência) e `postgres-shared.js` (infra comum às duas: `.env.example`, `docker-compose.yml`, `config/env.ts`).
+- `capabilities/*.js` — `postgres-kysely.js`, `postgres-sequelize.js` (persistência), `postgres-shared.js` (infra comum às duas: `.env.example`, `docker-compose.yml`, `config/env.ts`) e `cors.js` (plataforma, Fase 5 — sem infra nem env própria).
 - `traits/*.js` — `linter.js` (ESLint básico/Prettier), `precommit.js` (Husky+lint-staged), `testing.js` (node:test nativo/Vitest) — sistema "à la carte" acoplável a qualquer profile.
 
-### V1 (`lib/scaffold/`, `lib/templates/`) — código morto, não desligado
-- Confirmado por leitura de `bin/cli.js` e pelo diff do commit `6342f1b` (que reescreveu o CLI inteiro para V2): **nada em `bin/cli.js` importa `lib/scaffold` ou `lib/templates`**.
-- Ainda assim, é mantido e testado isoladamente (`tests/deps.test.js`, `tests/writeBaseFiles*.test.js`, `tests/pkgjson.test.js`, `tests/makeFolders.test.js`, `tests/dbPlugin.test.js`, `tests/devcontainer.test.js`, `tests/eslintConfig.test.js`, `tests/fastifyDbTypes.test.js`, `tests/prismaSchema.test.js`, `tests/routeTemplates.test.js`, `tests/cli.test.js`) — 59 testes passando, mas exercitando um caminho que o usuário final nunca alcança.
-- O `README.md` promete um "fluxo interativo legado (V1)" acessível via `npx fastify-boilerplate` para Sequelize/Knex/MVC — **isso não existe mais no `bin/cli.js` atual**. Todo o wizard interativo (incluindo o menu "🛠️ Personalizado") já é 100% V2.
+### V1 — removida na Fase 6 do roadmap ([ADR-004](docs/adr/ADR-004-remocao-v1.md))
+`lib/scaffold/`, `lib/templates/{js,common,ts}` e `lib/examples/` (e os 11 testes que só existiam
+para cobri-los) foram apagados do repositório — não havia nenhum caminho em `bin/cli.js` que os
+alcançasse desde a reescrita para V2 (commit `6342f1b`). O motor V2 é hoje o único motor que existe
+no repositório, não só o único que o CLI executa. Detalhes da decisão e do que foi removido: seção
+14 abaixo e o ADR.
 
 ## 3. Matriz real de profiles (verificado no código, não só na doc)
 
@@ -80,12 +82,12 @@ Um **gerador de projetos Fastify** (`npx fastify-boilerplate`): CLI interativo o
 
 ## 7. Riscos/decisões em aberto para a refatoração
 
-1. Decidir o destino da V1 (`lib/scaffold/`, `lib/templates/`, seus 10 arquivos de teste): remover de vez ou formalizar remoção via spec/ADR, conforme a própria constituição exige (Art. II) — hoje é ambiguidade não resolvida. Deliberadamente adiado para a Fase 6 do roadmap: enquanto os evals do V2 estavam vermelhos, a V1 era a única rede de segurança do repo.
+1. ~~Decidir o destino da V1 (`lib/scaffold/`, `lib/templates/`, seus arquivos de teste): remover de vez ou formalizar remoção via spec/ADR, conforme a própria constituição exige (Art. II).~~ **Resolvido** — ver [ADR-004](docs/adr/ADR-004-remocao-v1.md) e seção 14 (Fase 6).
 2. ~~Corrigir `npm test` para incluir `tests/v2/**`, ou dividir scripts (`test:unit`, `test:e2e`).~~ **Resolvido** — ver seção 4.
 3. ~~Unificar a fonte de verdade de status por profile.~~ **Resolvido** — ver seção 3.
 4. ~~Resolver `mvc`/`clean`: rebaixar `status` para `experimental`, escrever eval E2E e corrigir o `clean` quebrado (TS2307).~~ **Resolvido** — ver seção 10 (Fase 2).
-5. Atualizar `README.md` para remover a menção ao fluxo V1 legado, já inexistente. Ainda em aberto.
-6. Decidir o que fazer com os achados de `docs/migration/current-baseline-findings.md` (fechar como resolvidos-por-remoção da V1, ou mover para uma spec de remoção formal). Ainda em aberto — depende do item 1.
+5. ~~Atualizar `README.md` para remover a menção ao fluxo V1 legado, já inexistente.~~ **Resolvido** — ver seção 14 (Fase 6).
+6. ~~Decidir o que fazer com os achados de `docs/migration/current-baseline-findings.md`.~~ **Resolvido** — fechado como resolvido-por-remoção, ver seção 14 (Fase 6).
 
 ## 8. Fase 1 do roadmap — honrar `npm install && npm run dev`
 
@@ -352,7 +354,75 @@ Verificado com `npm test` completo: **16 testes, 0 falhas** (15 da Fase 4 + o no
 `modular-cors`), mais `npm run docs:support-matrix:check` e `npm run test:unit` (59 testes, V1
 inalterada) isoladamente.
 
-## 13. Ambiente de teste verificado nesta sessão
+## 13. Fase 6 do roadmap — remover a V1 e publicar
+
+Última fase do roadmap "Primeiro comando". Escopo entregue nesta rodada: **tudo, exceto o
+`npm publish` em si** — por instrução explícita do usuário, o pacote não foi publicado no npm; o
+`package.json` foi preparado (versão `2.1.0`) mas a publicação fica para quando o usuário decidir.
+
+**O que mudou:**
+
+- **V1 removida por completo** ([ADR-004](docs/adr/ADR-004-remocao-v1.md)): `lib/scaffold/`
+  (4 arquivos), `lib/templates/{js,common,ts}` (não confundir com `lib/v2/templates/`, que
+  continua existindo), `lib/examples/` (todos os exemplos MVC/Modular/Clean em JS e TS do fluxo
+  antigo), o script manual `test-generation.js` na raiz, `TESTING.md` (documentava só a cobertura
+  do V1) e os 11 arquivos de teste que só cobriam esse código (`tests/deps.test.js`,
+  `tests/writeBaseFiles.test.js`, `tests/writeBaseFilesExtended.test.js`, `tests/pkgjson.test.js`,
+  `tests/makeFolders.test.js`, `tests/dbPlugin.test.js`, `tests/devcontainer.test.js`,
+  `tests/eslintConfig.test.js`, `tests/fastifyDbTypes.test.js`, `tests/prismaSchema.test.js`,
+  `tests/routeTemplates.test.js`). Nenhum caminho em `bin/cli.js` importava esse código desde a
+  reescrita para V2 (commit `6342f1b`) — confirmado de novo antes de apagar, com grep recursivo por
+  `lib/scaffold`, `lib/examples` e os três subdiretórios do `lib/templates` antigo.
+- **`docs/migration/current-baseline-findings.md` fechado como resolvido-por-remoção**: ganhou um
+  aviso no topo apontando para o ADR-004; o conteúdo original (o baseline que originou a migração
+  V1 → V2) permanece como histórico, não foi apagado.
+- **`README.md` reescrito por completo**: sem nenhuma menção ao fluxo V1/"legado". Descreve os 7
+  profiles reais (incluindo `modular-cors` da Fase 5), aponta `docs/product/support-matrix.md`
+  como fonte oficial, documenta `--install`/`--git`/`--force` e explica que o README de cada
+  projeto gerado é dinâmico (Fase 4), não uma cópia deste.
+- **Guarda de diretório não vazio (achado 15)**: `bin/cli.js` agora recusa gerar sobre um diretório
+  que já existe e não está vazio, a menos que `--force` seja passado explicitamente. Antes, gerar
+  `mvc` por cima de um `minimal` já instalado misturava as duas árvores em silêncio.
+- **Slug do nome do projeto (achado 18)**: `core/slug.js` (novo) exporta `toPackageName(name)`,
+  usado só para o campo `name` do `package.json` gerado — `"Meu Projeto!!"` agora vira
+  `"meu-projeto"` em vez de ser gravado como está. O nome de pasta e o título do README continuam
+  usando o texto original digitado pelo usuário; só o `package.json` precisa de um nome válido.
+- **`--packageManager` removido (achado 17)**: a flag só trocava o texto impresso ao final —
+  não gerava `.npmrc`, workspace, nem travava lockfile para pnpm/yarn, então prometia mais suporte
+  do que existia. Como implementar isso de verdade é uma feature própria (não um conserto), a
+  flag foi removida e `npm` passou a ser hardcoded nos pontos que a usavam — a mesma escolha que o
+  roadmap já sugeria ("ou implementa, ou sai do CLI").
+- **Limpeza de `bin/cli.js`**: a cadeia de 6 `if/else` que resolvia o profile selecionado virou um
+  registro declarativo (`PROFILE_LOADERS`, um objeto `id -> loader`); `v2Profiles` (a lista usada
+  para validar a flag `--profile`) passou a ser derivada desse registro (`Object.keys(...)`) em vez
+  de mantida à mão em paralelo — não existe mais como as duas listas divergirem. Os imports `fs`
+  e `fsp`, que estavam mortos (achado 16 já tinha sido resolvido na Fase 2, mas os imports
+  continuavam órfãos), voltaram a ter uso real na guarda de diretório acima.
+- **Bug encontrado e corrigido no caminho, fora da lista de achados**: `bin/cli.js` imprimia
+  `create-fastify-team` como nome do produto na primeira linha, mas o pacote publicado é
+  `fastify-boilerplate` (`npx fastify-boilerplate`, como o próprio README sempre instruiu) — a
+  constante `PKG` estava desatualizada de uma versão anterior do projeto. Corrigida para
+  `fastify-boilerplate`.
+- **`package.json`**: `chalk`, `ejs`, `fs-extra` (só o V1 usava — confirmado por grep, zero
+  ocorrências no código que sobrou) e a dependência `path` (nunca fazia efeito: o módulo nativo
+  `node:path` sempre tem precedência sobre um pacote npm de mesmo nome em `import`/`require`, então
+  essa entrada no `package.json` nunca foi resolvida por ninguém) saíram de `dependencies`. Campo
+  `main: "index.js"` removido — apontava para um arquivo que nunca existiu no repositório (o pacote
+  é consumido como CLI via `bin`, não como biblioteca via `require`/`import`). Versão bump para
+  `2.1.0`. `npm install` rodado depois: 17 pacotes a menos, zero erro de resolução.
+
+**Verificação:** `npm test` completo (16 testes, 0 falhas — inalterado, a V1 não fazia parte desse
+número desde que virou `test:unit` apontando só para `tests/*.test.js`, que agora tem 1 teste
+trivial em vez de 60) e `npm run docs:support-matrix:check`. Testado manualmente: gerar em
+diretório vazio (ok), gerar em diretório não vazio sem `--force` (recusa com a mensagem certa),
+gerar com `--force` por cima (permite), e `toPackageName` com nomes com espaço/maiúscula/pontuação.
+Nenhum container Docker órfão depois da suíte completa.
+
+**Deliberadamente fora desta rodada, por instrução explícita do usuário:** `npm publish`. O
+`package.json` está em `2.1.0`, mas nenhum `npm publish`, tag de git ou release do GitHub foi
+criado — a publicação em si é uma decisão do usuário, para quando ele decidir.
+
+## 14. Ambiente de teste verificado nesta sessão
 
 Estado anterior (referência histórica):
 ```

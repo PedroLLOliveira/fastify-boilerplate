@@ -5,85 +5,90 @@
 ![TypeScript](https://img.shields.io/badge/TypeScript-%5E5.5.0-blue?style=flat-square&logo=typescript)
 ![GitHub Actions](https://img.shields.io/badge/GitHub%20Actions-CI/CD-blue?style=flat-square&logo=github-actions)
 
-🚀 **Fastify Boilerplate** é um **gerador de projetos Fastify** para times e solo: você cria um novo app Node.js já com **arquitetura organizada, padrões de código, testes, CI** e **ambiente de desenvolvimento** prontos.
+🚀 **fastify-boilerplate** é um **gerador de projetos Fastify**: você escolhe um profile, roda dois
+comandos, e tem um app Node.js + TypeScript pronto para rodar — arquitetura organizada, lint,
+testes e (quando aplicável) infraestrutura de banco via Docker Compose já configurados.
 
-> ⚠️ **Aviso de Refatoração V2:** O projeto está passando por uma reescrita para garantir o uso rigoroso de TypeScript ESM (NodeNext), Fastify v5, dependências com versões fixas determinísticas e execução end-to-end garantida.
-
-Atualmente, a fundação V2 suporta os profiles **Minimal** e **Modular** (ambos 100% testáveis nativamente). As demais opções (ORMs, MVC, etc) pertencem ao fluxo Interativo Legacy (V1) e poderão apresentar conflitos se misturados até que ganhem suas specs definitivas na V2.
-
----
-
-## ✨ O que vem pronto (V2 - Profiles Minimal & Modular)
-
-- ✅ **Fastify v5** → servidor web leve e veloz para Node.js.
-- ✅ **TypeScript ESM Puro** → `type: module` e `moduleResolution: NodeNext`.
-- ✅ **Testes Nativos** → Configuração do framework `node:test` (via tsx) sem dependências pesadas, com app.inject().
-- ✅ **ESLint** → linting consistente.
-- ✅ **Composição estática** → Divisão rigorosa entre `app.ts` (setup e binds) e `server.ts` (socket handler e shutdown).
+Existe um único motor de geração. Toda combinação anunciada aqui tem eval E2E verde em CI — nada
+neste README descreve um caminho que o CLI não entrega de verdade (ver
+`docs/product/support-matrix.md`, gerado a partir do código, não editado à mão).
 
 ---
 
-## 🚀 Instalação & uso
-
-Você pode usar o gerador pontualmente usando `npx`.
-
-### Gerando o projeto suportado (V2 - Minimal ou Modular Profile)
-
-Para criar o projeto usando o motor determinístico V2, que provê uma base impecável em TS ESM e testável nativamente:
+## 🚀 Uso
 
 ```bash
 npx fastify-boilerplate --profile modular --projectName meu-app
-# ou --profile minimal
+cd meu-app
+npm install
+npm run dev
 ```
 
-Isso fará o *bypass* do assistente antigo e usará o gerador estrito que garante a compatibilidade e build sem problemas com o Node v20+.
+Sem `--profile`, o CLI abre um wizard interativo com atalhos para os profiles mais comuns e uma
+opção **🛠️ Personalizado** para montar arquitetura + banco + linter + pre-commit + framework de
+teste passo a passo.
 
-### Fluxo Interativo Legado (V1)
-
-Caso precise gerar projetos com Sequelize, Knex ou arquitetura MVC, você pode acessar o assistente v1. **Atenção: essas arquiteturas estão sem Evals E2E no momento e podem precisar de ajustes em seus imports/builds**.
+Flags de conveniência:
 
 ```bash
-npx fastify-boilerplate
+npx fastify-boilerplate --profile modular --projectName meu-app --install --git
+# --install: já roda "npm install" ao final
+# --git: já inicializa o repositório e cria o commit inicial
 ```
 
-O CLI abrirá um wizard interativo onde você poderá explorar as antigas opções.
+Gerando por cima de um diretório que já existe e não está vazio, o CLI recusa com um erro
+explícito — use `--force` se a intenção é mesmo misturar/sobrescrever.
 
 ---
 
-## 🧪 Scripts úteis (no projeto gerado na V2)
+## 📦 Profiles disponíveis
 
-Após gerar o projeto (Minimal ou Modular), a sua aplicação já conterá no `package.json`:
+| Profile | Arquitetura | Persistência | Quando escolher |
+|---|---|---|---|
+| `minimal` | Minimal | nenhuma | Um único arquivo de rotas — o menor ponto de partida. |
+| `modular` | Modular | nenhuma (CRUD em memória) | Domínios separados por pasta, sem banco. |
+| `modular-cors` | Modular | nenhuma (CRUD em memória) | `modular` + `@fastify/cors` já registrado. |
+| `modular-postgres-kysely` | Modular | PostgreSQL + Kysely | SQL type-safe, migrations e seed prontos. |
+| `modular-postgres-sequelize` | Modular | PostgreSQL + Sequelize | Active Record clássico. |
+| `mvc` | MVC (Controller-Service-Repository) | nenhuma | Time acostumado com a separação MVC tradicional. |
+| `clean` | Clean Architecture | nenhuma | Isolamento de casos de uso, portas e adaptadores. |
 
-```bash
-npm run dev        # inicia o servidor em desenvolvimento via tsx
-npm run build      # limpa e compila o dist/ em NodeNext
-npm test           # roda a suite nativa (node --test) via tsx
-npm run lint       # executa o ESLint
-npm start          # roda a versão de produção gerada no dist
-```
+A lista oficial e atualizada é sempre `docs/product/support-matrix.md` — ele é gerado por
+`npm run docs:support-matrix` a partir do campo `status` de cada `lib/v2/profiles/*.js`, então as
+duas fontes nunca divergem em CI.
+
+Nos profiles com Postgres, `npm run dev` sozinho já sobe o banco via Docker Compose (com
+healthcheck e volume nomeado), roda as migrations e o seed de exemplo — não precisa de nenhum
+comando manual antes. Já tem um Postgres seu? `npm run dev:no-infra` pula o Docker Compose.
+
+Cada projeto gerado ganha o seu próprio `README.md`, montado a partir dos scripts e arquivos
+finais daquela combinação específica (depois de traits e capabilities aplicados) — nunca promete
+um comando ou rota que a combinação escolhida não tem.
 
 ---
 
-## 🧭 Roadmap sugerido após gerar o projeto
+## 🧪 Scripts do projeto gerado
 
-1. Acesse o diretório: `cd meu-app`
-2. Instale as dependências: `npm install`
-3. Crie a cópia do env local: `cp .env.example .env`
-4. Rode a suite de testes: `npm test`
-5. Suba em dev `npm run dev` e chame `http://localhost:3000/health`.
+```bash
+npm run dev        # servidor em modo desenvolvimento (watch)
+npm run build      # compila para dist/
+npm start          # roda a build de produção
+npm run lint       # ESLint
+npm test           # suíte de testes (node:test ou Vitest, conforme o trait escolhido)
+```
+
+Profiles com Postgres também ganham `db:migrate`, `db:seed`, `db:reset` e `predev` (que encadeia
+compose + migrate + seed automaticamente).
 
 ---
 
 ## 🤝 Como contribuir
 
-Contribuições são super bem-vindas! Nosso foco no momento é migrar os antigos templates v1 (ORMs, Modular) para o motor determinístico da v2.
-
-1. **Faça um fork** do repositório.
-2. **Crie uma branch** descritiva (ex: `feat/v2-profile-modular`)
-3. **Instale as deps e rode testes**:
-   ```bash
-   npm ci
-   npm test
-   ```
-4. **Implemente sua melhoria**
-5. Abra um Pull Request e assegure-se de que os testes end-to-end de geração de pastas temporárias estejam passando (nenhum projeto deve ser quebrado!).
+1. Fork e branch descritiva (ex.: `feat/nova-capability-redis`).
+2. `npm ci && npm test` — roda os testes unitários do gerador e os evals E2E (geram projeto de
+   verdade em diretório temporário, instalam dependências reais e, quando aplicável, sobem
+   Postgres via Docker).
+3. Toda mudança que altera geração precisa atualizar entrada do CLI, dependências, arquivos,
+   testes e documentação afetados — ver `AGENTS.md` e a constituição em
+   `.specify/memory/constitution.md`.
+4. Abra o Pull Request com os evals relevantes passando localmente.

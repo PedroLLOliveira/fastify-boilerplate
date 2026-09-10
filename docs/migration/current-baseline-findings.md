@@ -1,5 +1,12 @@
 # Baseline da v1 — achados para orientar a migração
 
+> **Resolvido por remoção — [ADR-004](../adr/ADR-004-remocao-v1.md), Fase 6 do roadmap
+> "Primeiro comando" (ver `HANDOFF.md`).** `lib/scaffold/`, `lib/templates/js`,
+> `lib/templates/ts`, `lib/templates/common` e `lib/examples/` — o código que os achados abaixo
+> descrevem — foram apagados do repositório. Os itens não foram corrigidos um a um: deixaram de
+> ter código correspondente. Este documento permanece como histórico da decisão de migração, não
+> como lista de pendências.
+
 Este documento registra divergências observadas na branch `main` analisada durante a preparação do harness. Ele não é uma crítica ao produto; é a fila inicial de caracterização brownfield.
 
 ## Achados prioritários
